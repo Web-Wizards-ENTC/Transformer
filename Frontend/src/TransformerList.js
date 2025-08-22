@@ -28,7 +28,7 @@ const transformerData = [
 const regions = ['All Regions', ...Array.from(new Set(transformerData.map(t => t.region)))];
 const types = ['All Types', ...Array.from(new Set(transformerData.map(t => t.type)))];
 
-function TransformerList() {
+function TransformerList(props) {
   const [region, setRegion] = useState('All Regions');
   const [type, setType] = useState('All Types');
   const [search, setSearch] = useState('');
@@ -88,8 +88,18 @@ function TransformerList() {
         />
         <button onClick={() => { setRegion('All Regions'); setType('All Types'); setSearch(''); setPage(1); }} className="text-indigo-600">Reset Filters</button>
         <div className="ml-auto flex gap-2">
-          <button className="px-4 py-2 rounded bg-indigo-100 text-indigo-700 font-semibold">Transformers</button>
-          <button className="px-4 py-2 rounded bg-white text-indigo-700 border">Inspections</button>
+          <button
+            className={`px-4 py-2 rounded ${props.page === 'transformers' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'bg-white text-indigo-700 border'}`}
+            onClick={() => props.setPage('transformers')}
+          >
+            Transformers
+          </button>
+          <button
+            className={`px-4 py-2 rounded ${props.page === 'inspections' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'bg-white text-indigo-700 border'}`}
+            onClick={() => props.setPage('inspections')}
+          >
+            Inspections
+          </button>
         </div>
       </div>
       <table className="w-full bg-white rounded shadow">

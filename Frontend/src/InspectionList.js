@@ -32,7 +32,7 @@ const statusColors = {
   'Completed': 'bg-purple-100 text-purple-700',
 };
 
-function InspectionList() {
+function InspectionList(props) {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
@@ -79,8 +79,18 @@ function InspectionList() {
         />
         <button onClick={() => setSearch('')} className="text-indigo-600">Reset Filters</button>
         <div className="ml-auto flex gap-2">
-          <button className="px-4 py-2 rounded bg-white text-indigo-700 border">Transformers</button>
-          <button className="px-4 py-2 rounded bg-indigo-100 text-indigo-700 font-semibold">Inspections</button>
+          <button
+            className={`px-4 py-2 rounded ${props.page === 'transformers' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'bg-white text-indigo-700 border'}`}
+            onClick={() => props.setPage('transformers')}
+          >
+            Transformers
+          </button>
+          <button
+            className={`px-4 py-2 rounded ${props.page === 'inspections' ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'bg-white text-indigo-700 border'}`}
+            onClick={() => props.setPage('inspections')}
+          >
+            Inspections
+          </button>
         </div>
       </div>
       <table className="w-full bg-white rounded shadow">
