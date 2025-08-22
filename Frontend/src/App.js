@@ -5,10 +5,12 @@ import AddTransformerModal from './AddTransformerModal';
 import AddInspection from './AddInspection';
 import TransformerList from './TransformerList';
 import InspectionList from './InspectionList';
+import TransformerInspectionDetails from './TransformerInspectionDetails';
 import './App.css';
 
 export default function App() {
   const [page, setPage] = React.useState('transformers');
+  // ...existing code...
   return (
     <div className="flex min-h-screen">
       <Sidebar />
@@ -18,13 +20,22 @@ export default function App() {
           {page === 'transformers' && (
             <>
               <AddTransformerModal />
-              <TransformerList page={page} setPage={setPage} />
+              <TransformerList 
+                page={page} 
+                setPage={setPage}
+                setPageToDetails={() => setPage('inspectionDetails')}
+              />
             </>
           )}
           {page === 'inspections' && (
             <>
               <AddInspection />
-              <InspectionList page={page} setPage={setPage} />
+              <InspectionList page={page} setPage={setPage} setPageToDetails={() => setPage('inspectionDetails')} />
+            </>
+          )}
+          {page === 'inspectionDetails' && (
+            <>
+              <TransformerInspectionDetails onBack={() => setPage('inspections')} />
             </>
           )}
         </div>
