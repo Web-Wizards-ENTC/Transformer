@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 
-export default function AddInspectionModal() {
-  const [open, setOpen] = useState(false);
+export default function AddInspectionModal({ open, setOpen }) {
   const [form, setForm] = useState({
     branch: "",
     transformerNo: "",
@@ -19,16 +18,7 @@ export default function AddInspectionModal() {
   };
 
   return (
-    <div>
-      {/* Button to open modal */}
-      <button
-        className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-        onClick={() => setOpen(true)}
-      >
-        New Inspection
-      </button>
-
-      {/* Modal */}
+    <>
       {open && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
@@ -97,6 +87,6 @@ export default function AddInspectionModal() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

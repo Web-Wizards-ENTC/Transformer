@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AddInspectionModal from './AddInspection';
 import './App.css';
 
 const inspectionData = [
@@ -34,6 +35,7 @@ const statusColors = {
 function InspectionList() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [modalOpen, setModalOpen] = useState(false);
   const pageSize = 10;
 
   const filtered = inspectionData.filter(t =>
@@ -46,9 +48,15 @@ function InspectionList() {
 
   return (
     <div className="p-8 font-sans bg-gray-50 min-h-screen">
+      <AddInspectionModal open={modalOpen} setOpen={setModalOpen} />
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">All Inspections</h1>
-        <button className="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700">Add Inspection</button>
+        <button
+          className="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700"
+          onClick={() => setModalOpen(true)}
+        >
+          Add Inspection
+        </button>
       </div>
       <div className="flex flex-wrap gap-4 mb-4 items-center">
         <input
