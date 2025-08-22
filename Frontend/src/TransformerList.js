@@ -120,7 +120,12 @@ function TransformerList(props) {
               <td className="py-2 px-4">{t.region}</td>
               <td className="py-2 px-4">{t.type}</td>
               <td className="py-2 px-4 text-right">
-                <button className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700">View</button>
+                <button 
+                  className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700"
+                  onClick={i === 0 ? props.setPageToDetails : undefined}
+                >
+                  View
+                </button>
               </td>
             </tr>
           ))}

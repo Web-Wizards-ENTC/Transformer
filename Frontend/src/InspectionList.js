@@ -115,7 +115,11 @@ function InspectionList(props) {
                 <span className={`px-3 py-1 rounded ${statusColors[t.status]}`}>{t.status}</span>
               </td>
               <td className="py-2 px-4 text-right">
-                <button className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700">View</button>
+                <button
+                  className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700"
+                >
+                  View
+                </button>
               </td>
             </tr>
           ))}
@@ -126,8 +130,7 @@ function InspectionList(props) {
           <button
             key={i + 1}
             className={`px-3 py-1 rounded ${page === i + 1 ? 'bg-indigo-600 text-white' : 'bg-indigo-100 text-indigo-700'}`}
-            onClick={() => setPage(i + 1)}
-          >
+            onClick={() => setPage(i + 1)}>
             {i + 1}
           </button>
         ))}
