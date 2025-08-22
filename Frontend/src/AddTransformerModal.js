@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 
-export default function AddTransformerModal() {
-  const [open, setOpen] = useState(false);
+export default function AddTransformerModal({ open, setOpen }) {
   const [form, setForm] = useState({
     region: "",
     transformerNo: "",
@@ -20,16 +19,7 @@ export default function AddTransformerModal() {
   };
 
   return (
-    <div>
-      {/* Button to open modal */}
-      <button
-        className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-        onClick={() => setOpen(true)}
-      >
-        Add Transformer
-      </button>
-
-      {/* Modal */}
+    <>
       {open && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
@@ -52,6 +42,8 @@ export default function AddTransformerModal() {
                 onChange={(e) => handleChange("region", e.target.value)}
               >
                 <option value="">Region</option>
+                <option value="colombo">Nugegoda</option>
+                <option value="colombo-0">Maharagama</option>
                 <option value="colombo-1">Kotuwa</option>
                 <option value="colombo-2">Kompanyaweediya</option>
                 <option value="colombo-3">Kollupitiya</option>
@@ -59,14 +51,6 @@ export default function AddTransformerModal() {
                 <option value="colombo-5">Havelock Town</option>
                 <option value="colombo-6">Wellawatte</option>
                 <option value="colombo-7">Kurunduwatte</option>
-                <option value="colombo-8">Borella</option>
-                <option value="colombo-9">Dematagoda</option>
-                <option value="colombo-10">Maradana</option>
-                <option value="colombo-11">Pitakotuwa</option>
-                <option value="colombo-12">Aluthkade</option>
-                <option value="colombo-13">Kotahena</option>
-                <option value="colombo-14">Grandpass</option>
-                <option value="colombo-15">Modara</option>
               </select>
 
               {/* Transformer No */}
@@ -126,6 +110,6 @@ export default function AddTransformerModal() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

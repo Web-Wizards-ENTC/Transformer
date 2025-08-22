@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import AddTransformerModal from './AddTransformerModal';
 import './App.css';
 
 const transformerData = [
@@ -34,20 +35,42 @@ function TransformerList() {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const filtered = transformerData.filter(t =>
-    (region === 'All Regions' || t.region === region) &&
-    (type === 'All Types' || t.type === type) &&
-    (t.no.toLowerCase().includes(search.toLowerCase()) || t.pole.toLowerCase().includes(search.toLowerCase()))
-  );
+  // Reset page to 1 when filters/search change
+  React.useEffect(() => {
+    setPage(1);
+  }, [region, type, search]);
+
+  // Filtering logic
+  let filtered = transformerData;
+  if (region !== 'All Regions') {
+    filtered = filtered.filter(t => t.region === region);
+  }
+  if (type !== 'All Types') {
+    filtered = filtered.filter(t => t.type === type);
+  }
+  if (search.trim() !== '') {
+    const s = search.toLowerCase();
+    filtered = filtered.filter(t =>
+      t.no.toLowerCase().includes(s) || t.pole.toLowerCase().includes(s)
+    );
+  }
 
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
   const totalPages = Math.ceil(filtered.length / pageSize);
 
+  const [modalOpen, setModalOpen] = useState(false);
+
   return (
     <div className="p-8 font-sans bg-gray-50 min-h-screen">
+      <AddTransformerModal open={modalOpen} setOpen={setModalOpen} />
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Transformers</h1>
-        <button className="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700">Add Transformer</button>
+        <button
+          className="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700"
+          onClick={() => setModalOpen(true)}
+        >
+          Add Transformer
+        </button>
       </div>
       <div className="flex flex-wrap gap-4 mb-4 items-center">
         <select value={region} onChange={e => setRegion(e.target.value)} className="border rounded px-2 py-1">
@@ -58,12 +81,12 @@ function TransformerList() {
         </select>
         <input
           type="text"
-          placeholder="Search Transformer"
+          placeholder="Search by Transformer No. or Pole No."
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="border rounded px-2 py-1"
         />
-        <button onClick={() => { setRegion('All Regions'); setType('All Types'); setSearch(''); }} className="text-indigo-600">Reset Filters</button>
+        <button onClick={() => { setRegion('All Regions'); setType('All Types'); setSearch(''); setPage(1); }} className="text-indigo-600">Reset Filters</button>
         <div className="ml-auto flex gap-2">
           <button className="px-4 py-2 rounded bg-indigo-100 text-indigo-700 font-semibold">Transformers</button>
           <button className="px-4 py-2 rounded bg-white text-indigo-700 border">Inspections</button>
