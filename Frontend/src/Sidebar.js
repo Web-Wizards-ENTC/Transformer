@@ -3,7 +3,7 @@ import { FaBolt, FaCog } from 'react-icons/fa';
 
 export default function Sidebar() {
   return (
-    <div className="h-screen w-56 bg-white border-r flex flex-col items-center py-6">
+  <div className="h-screen w-56 bg-white border-r flex flex-col items-center py-6">
       {/* Logo */}
       <div className="mb-10 flex items-center gap-2">
         <img src="/webwizards.png" alt="Logo" className="w-8 h-8" />
