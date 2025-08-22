@@ -14,15 +14,15 @@ const transformerData = [
   { no: 'AZ-8456', pole: 'EN-123-A', region: 'Maharagama', type: 'Bulk' },
   { no: 'AZ-7896', pole: 'EN-123-A', region: 'Maharagama', type: 'Bulk' },
   { no: 'AX-8990', pole: 'EN-123-A', region: 'Maharagama', type: 'Distribution' },
-  { no: 'AZ-9001', pole: 'EN-124-A', region: 'Nugegoda', type: 'Bulk' },
-  { no: 'AZ-9002', pole: 'EN-124-B', region: 'Nugegoda', type: 'Bulk' },
-  { no: 'AZ-9003', pole: 'EN-125-A', region: 'Maharagama', type: 'Distribution' },
-  { no: 'AZ-9004', pole: 'EN-125-B', region: 'Maharagama', type: 'Bulk' },
-  { no: 'AZ-9005', pole: 'EN-126-A', region: 'Nugegoda', type: 'Distribution' },
+  { no: 'AY-7701', pole: 'EN-124-A', region: 'Nugegoda', type: 'Bulk' },
+  { no: 'AZ-9052', pole: 'EN-124-B', region: 'Nugegoda', type: 'Bulk' },
+  { no: 'AZ-9063', pole: 'EN-125-A', region: 'Maharagama', type: 'Distribution' },
+  { no: 'AX-6004', pole: 'EN-125-B', region: 'Maharagama', type: 'Bulk' },
+  { no: 'AY-8405', pole: 'EN-126-A', region: 'Nugegoda', type: 'Distribution' },
   { no: 'AZ-9006', pole: 'EN-126-B', region: 'Maharagama', type: 'Bulk' },
-  { no: 'AZ-9007', pole: 'EN-127-A', region: 'Nugegoda', type: 'Bulk' },
-  { no: 'AZ-9008', pole: 'EN-127-B', region: 'Maharagama', type: 'Distribution' },
-  { no: 'AZ-9009', pole: 'EN-128-A', region: 'Nugegoda', type: 'Bulk' },
+  { no: 'AX-7007', pole: 'EN-127-A', region: 'Nugegoda', type: 'Bulk' },
+  { no: 'AZ-9608', pole: 'EN-127-B', region: 'Maharagama', type: 'Distribution' },
+  { no: 'AY-8069', pole: 'EN-128-A', region: 'Nugegoda', type: 'Bulk' },
 ];
 
 const regions = ['All Regions', ...Array.from(new Set(transformerData.map(t => t.region)))];
