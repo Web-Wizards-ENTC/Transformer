@@ -15,11 +15,7 @@ export default function App() {
         <UpperBar />
         <div className="p-8">
           <AddTransformerModal />
-        </div>
-        <div className="p-8">
           <AddInspection />
-        </div>
-        <div className="p-8">
           <TransformerList />
           <InspectionList />
         </div>
