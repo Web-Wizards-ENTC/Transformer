@@ -1,0 +1,10 @@
+{
+  "AZ-8890": {
+    "Baseline": ["Transformer-Base.jpeg", "2025-08-18", "22:00 PM"],
+    "Thermal": ["Transformer-Current.jpg", "2025-08-20", "22:00 PM", "Cloudy"]
+  },
+  "AZ-1649": {
+    "Baseline": ["baseline3.jpg", "2025-08-18", "22:00 PM"],
+    "Thermal": []
+  }
+}
