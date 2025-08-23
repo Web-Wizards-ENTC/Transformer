@@ -17,6 +17,7 @@ public class Transformer {
     private String transformerId;
     private String location;
     private String capacity;
+    private String manufacturer;
 
     // --- Getters & Setters ---
     public Long getId() { return id; }
@@ -30,4 +31,8 @@ public class Transformer {
 
     public String getCapacity() { return capacity; }
     public void setCapacity(String capacity) { this.capacity = capacity; }
+
+    // getters & setters
+    public String getManufacturer() { return manufacturer; }
+    public void setManufacturer(String manufacturer) { this.manufacturer = manufacturer; }
 }
