@@ -1,7 +1,6 @@
 package com.webwizards.transformerApp.model;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "inspections")
@@ -11,28 +10,24 @@ public class Inspection {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String inspectorName;
-    private String notes;
-    private LocalDateTime inspectionDate = LocalDateTime.now();
+    private String branch;
+    private String transformerNo;   // transformer reference number
+    private String date;            // you could also use LocalDate
+    private String time;            // you could also use LocalTime
 
-    // link to Transformer
-    @ManyToOne
-    @JoinColumn(name = "transformer_id", nullable = false)
-    private Transformer transformer;
-
-    // getters & setters
+    // --- Getters & Setters ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public String getInspectorName() { return inspectorName; }
-    public void setInspectorName(String inspectorName) { this.inspectorName = inspectorName; }
+    public String getBranch() { return branch; }
+    public void setBranch(String branch) { this.branch = branch; }
 
-    public String getNotes() { return notes; }
-    public void setNotes(String notes) { this.notes = notes; }
+    public String getTransformerNo() { return transformerNo; }
+    public void setTransformerNo(String transformerNo) { this.transformerNo = transformerNo; }
 
-    public LocalDateTime getInspectionDate() { return inspectionDate; }
-    public void setInspectionDate(LocalDateTime inspectionDate) { this.inspectionDate = inspectionDate; }
+    public String getDate() { return date; }
+    public void setDate(String date) { this.date = date; }
 
-    public Transformer getTransformer() { return transformer; }
-    public void setTransformer(Transformer transformer) { this.transformer = transformer; }
+    public String getTime() { return time; }
+    public void setTime(String time) { this.time = time; }
 }
