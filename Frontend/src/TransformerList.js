@@ -14,6 +14,9 @@ const transformerData = [
   { no: 'AZ-8456', pole: 'EN-123-A', region: 'Maharagama', type: 'Bulk' },
   { no: 'AZ-7896', pole: 'EN-123-A', region: 'Maharagama', type: 'Bulk' },
   { no: 'AX-8990', pole: 'EN-123-A', region: 'Maharagama', type: 'Distribution' },
+
+  { no: 'AZ-9403', pole: 'EN-123-A', region: 'Maharagama', type: 'Distribution' },
+
   { no: 'AY-7701', pole: 'EN-124-A', region: 'Nugegoda', type: 'Bulk' },
   { no: 'AZ-9052', pole: 'EN-124-B', region: 'Nugegoda', type: 'Bulk' },
   { no: 'AZ-9063', pole: 'EN-125-A', region: 'Maharagama', type: 'Distribution' },
@@ -122,7 +125,12 @@ function TransformerList(props) {
               <td className="py-2 px-4 text-right">
                 <button 
                   className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700"
-                  onClick={i === 0 ? props.setPageToDetails : undefined}
+
+                  onClick={() => {
+                    props.setSelectedTransformer(t); // Pass the row transformer
+                    props.setPage('inspectionDetails'); // Go to details page
+                  }}
+
                 >
                   View
                 </button>

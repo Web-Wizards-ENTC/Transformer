@@ -1,8 +1,7 @@
 import React from 'react';
 import Sidebar from './Sidebar';
 import UpperBar from './UpperBar';
-import AddTransformerModal from './AddTransformerModal';
-import AddInspection from './AddInspection';
+
 import TransformerList from './TransformerList';
 import InspectionList from './InspectionList';
 import TransformerInspectionDetails from './TransformerInspectionDetails';
@@ -10,7 +9,10 @@ import './App.css';
 
 export default function App() {
   const [page, setPage] = React.useState('transformers');
-  // ...existing code...
+
+  const [selectedTransformer, setSelectedTransformer] = React.useState(null);
+
+
   return (
     <div className="flex min-h-screen">
       <Sidebar />
@@ -18,28 +20,33 @@ export default function App() {
         <UpperBar />
         <div className="p-8">
           {page === 'transformers' && (
-            <>
-              <AddTransformerModal />
-              <TransformerList 
-                page={page} 
-                setPage={setPage}
-                setPageToDetails={() => setPage('inspectionDetails')}
-              />
-            </>
+
+            <TransformerList 
+              page={page} 
+              setPage={setPage}
+              setSelectedTransformer={setSelectedTransformer}
+            />
           )}
+
           {page === 'inspections' && (
-            <>
-              <AddInspection />
-              <InspectionList page={page} setPage={setPage} setPageToDetails={() => setPage('inspectionDetails')} />
-            </>
+            <InspectionList 
+              page={page} 
+              setPage={setPage} 
+            />
           )}
-          {page === 'inspectionDetails' && (
-            <>
-              <TransformerInspectionDetails onBack={() => setPage('inspections')} />
-            </>
+
+          {page === 'inspectionDetails' && selectedTransformer && (
+            <TransformerInspectionDetails 
+              transformer={selectedTransformer}
+              onBack={() => setPage('transformers')} 
+            />
+
           )}
         </div>
       </div>
     </div>
   );
 }
+
+
+
