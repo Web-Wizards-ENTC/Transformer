@@ -21,6 +21,9 @@ const inspectionData = [
   { no: 'AX-1005', inspectionNo: '000123594', inspected: '14 Jul, 2025 15:00', maintenance: '-', status: 'Pending' },
   { no: 'AZ-4336', inspectionNo: '000123595', inspected: '15 Jul, 2025 16:20', maintenance: '18 Jul, 2025 09:00', status: 'Completed' },
   { no: 'AY-9507', inspectionNo: '000123596', inspected: '16 Jul, 2025 17:10', maintenance: '19 Jul, 2025 13:00', status: 'Completed' },
+
+  { no: 'AZ-9403', inspectionNo: '000123593', inspected: '12 Jul, 2025 13:45', maintenance: '15 Jul, 2025 10:00', status: 'Completed' },
+
   { no: 'AZ-9408', inspectionNo: '000123597', inspected: '17 Jul, 2025 18:00', maintenance: '-', status: 'In Progress' },
   { no: 'AX-3209', inspectionNo: '000123598', inspected: '18 Jul, 2025 19:00', maintenance: '20 Jul, 2025 14:00', status: 'Completed' },
  
@@ -140,3 +143,6 @@ function InspectionList(props) {
 }
 
 export default InspectionList;
+
+export { inspectionData };
+
