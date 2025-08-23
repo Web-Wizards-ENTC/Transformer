@@ -7,13 +7,25 @@ import com.webwizards.transformerApp.model.InspectionImage;
 import com.webwizards.transformerApp.repository.TransformerRepository;
 import com.webwizards.transformerApp.repository.InspectionImageRepository;
 import com.webwizards.transformerApp.repository.InspectionRepository;
+
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.List;
 
 import java.io.File;
+
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 
 
 @RestController
@@ -89,5 +101,26 @@ public class MainController {
         image.setInspection(inspection);
 
         return inspectionImageRepo.save(image);
+    }
+
+    @GetMapping("/images/{id}")
+    public ResponseEntity<Resource> getImage(@PathVariable Long id) throws Exception {
+        // 1. Find the image in DB
+        InspectionImage image = inspectionImageRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Image not found"));
+
+        // 2. Get the file path
+        Path path = Paths.get(image.getFilePath());
+
+        // 3. Load it as a Resource
+        Resource resource = new UrlResource(path.toUri());
+        if (!resource.exists()) {
+            throw new RuntimeException("File not found on disk: " + image.getFilePath());
+        }
+
+        // 4. Return the file with correct content type
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(image.getContentType()))
+                .body(resource);
     }
 }
