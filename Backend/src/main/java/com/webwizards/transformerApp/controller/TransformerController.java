@@ -1,27 +1,28 @@
-package com.webwizards.transformerApp.controller;   // ⚠️ use your actual package name
+package com.webwizards.transformerApp.controller;
 
 import com.webwizards.transformerApp.model.Transformer;
+import com.webwizards.transformerApp.repository.TransformerRepository;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping("/transformers")
 public class TransformerController {
 
-    private List<Transformer> transformers = new ArrayList<>();
+    private final TransformerRepository repository;
 
-    // ➡ Add a transformer
-    @PostMapping
-    public Transformer addTransformer(@RequestBody Transformer transformer) {
-        transformers.add(transformer);
-        return transformer;
+    public TransformerController(TransformerRepository repository) {
+        this.repository = repository;
     }
 
-    // ➡ Get all transformers
+    @PostMapping
+    public Transformer addTransformer(@RequestBody Transformer transformer) {
+        return repository.save(transformer);
+    }
+
     @GetMapping
     public List<Transformer> getTransformers() {
-        return transformers;
+        return repository.findAll();
     }
 }
