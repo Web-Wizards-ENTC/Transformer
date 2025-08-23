@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { addInspection } from "./API";
 
 export default function AddInspectionModal({ open, setOpen }) {
   const [form, setForm] = useState({
@@ -13,8 +14,18 @@ export default function AddInspectionModal({ open, setOpen }) {
   };
 
   const handleConfirm = () => {
-    console.log("Inspection submitted:", form);
-    setOpen(false);
+    async function submit() {
+      try {
+        await addInspection(form);
+        // Optionally show success message or update UI
+      } catch (error) {
+        // Optionally show error message
+        console.error(error);
+      } finally {
+        setOpen(false);
+      }
+    }
+    submit();
   };
 
   return (

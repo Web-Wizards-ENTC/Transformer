@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { addTransformer } from "./API";
 
 export default function AddTransformerModal({ open, setOpen }) {
   const [form, setForm] = useState({
@@ -14,8 +15,18 @@ export default function AddTransformerModal({ open, setOpen }) {
   };
 
   const handleConfirm = () => {
-    console.log("Form submitted:", form);
-    setOpen(false);
+    async function submit() {
+      try {
+        await addTransformer(form);
+        // Optionally show success message or update UI
+      } catch (error) {
+        // Optionally show error message
+        console.error(error);
+      } finally {
+        setOpen(false);
+      }
+    }
+    submit();
   };
 
   return (
