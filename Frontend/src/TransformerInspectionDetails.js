@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from "react";
 import { FaStar, FaRegStar, FaEye, FaTrash, FaEllipsisV, FaMapMarkerAlt } from 'react-icons/fa';
 import { inspectionData } from './InspectionList';
@@ -70,12 +71,14 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
     <div className="p-8 font-sans bg-gray-50 min-h-screen">
       {/* Transformer header */}
       <div className="flex justify-between items-start mb-6">
+
         <div>
           <div className="flex items-center gap-3 mb-3">
             <div className="w-12 h-12 rounded bg-indigo-700 flex items-center justify-center text-white">
               <div className="w-4 h-4 bg-white rounded"></div>
             </div>
             <div>
+
               <div className="font-semibold text-lg">{transformer.no}</div>
               <div className="text-xs text-gray-500 flex items-center">
                 {transformer.region} 
@@ -88,6 +91,7 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
           <div className="flex gap-2 mb-2">
             <div className="bg-gray-100 border border-gray-200 px-4 py-1 rounded-md">
               <div className="text-center text-gray-800 font-medium">{transformer.pole}</div>
+
               <div className="text-center text-gray-500 text-xs">Pole No</div>
             </div>
             <div className="bg-gray-100 border border-gray-200 px-4 py-1 rounded-md">
@@ -95,15 +99,18 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
               <div className="text-center text-gray-500 text-xs">Capacity</div>
             </div>
             <div className="bg-gray-100 border border-gray-200 px-4 py-1 rounded-md">
+
               <div className="text-center text-gray-800 font-medium">{transformer.type}</div>
               <div className="text-center text-gray-500 text-xs">Type</div>
             </div>
             <div className="bg-gray-100 border border-gray-200 px-4 py-1 rounded-md">
               <div className="text-center text-gray-800 font-medium">{inspections.length}</div>
+
               <div className="text-center text-gray-500 text-xs">No. of Feeders</div>
             </div>
           </div>
         </div>
+
 
         {/* Right side buttons */}
         <div className="text-right">
@@ -124,6 +131,7 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
               onChange={handleBaselineFileChange}
             />
 
+
             <button className="bg-gray-50 border border-gray-200 w-7 h-7 rounded-md flex items-center justify-center">
               <FaTrash className="text-red-500 text-xs" />
             </button>
@@ -133,6 +141,7 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
           </div>
         </div>
       </div>
+
 
       {/* Thermal Upload or Inspections Table */}
       {showThermal && selectedTransformer === transformer.no ? (
@@ -206,6 +215,7 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
           </div>
         </div>
       )}
+
 
       <div className="mt-6">
         <button className="text-indigo-600" onClick={onBack}>Back</button>
