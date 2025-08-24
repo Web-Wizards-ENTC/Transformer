@@ -5,6 +5,8 @@ public class InspectionRequest {
     private String transformerNo;
     private String date;
     private String time;
+    private String status;
+    private String maintainanceDate;
 
     // --- Getters and Setters ---
     public String getBranch() { return branch; }
@@ -18,4 +20,10 @@ public class InspectionRequest {
 
     public String getTime() { return time; }
     public void setTime(String time) { this.time = time; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public String getMaintainanceDate() { return maintainanceDate; }
+    public void setMaintainanceDate(String maintainanceDate) { this.maintainanceDate = maintainanceDate; }
 }

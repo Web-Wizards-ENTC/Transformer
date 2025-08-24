@@ -56,15 +56,16 @@ public class MainController {
 
     @PostMapping("/inspections")
     public Inspection addInspection(@RequestBody InspectionRequest request) {
-        // Create a new Inspection
-        Inspection inspection = new Inspection();
-        inspection.setBranch(request.getBranch());
-        inspection.setTransformerNo(request.getTransformerNo());
-        inspection.setDate(request.getDate());
-        inspection.setTime(request.getTime());
-    
-        // Save into DB
-        return inspectionRepo.save(inspection);
+    // Create a new Inspection
+    Inspection inspection = new Inspection();
+    inspection.setBranch(request.getBranch());
+    inspection.setTransformerNo(request.getTransformerNo());
+    inspection.setDate(request.getDate());
+    inspection.setTime(request.getTime());
+    inspection.setStatus(request.getStatus());
+    inspection.setMaintainanceDate(request.getMaintainanceDate());
+    // Save into DB
+    return inspectionRepo.save(inspection);
     }
     
 
