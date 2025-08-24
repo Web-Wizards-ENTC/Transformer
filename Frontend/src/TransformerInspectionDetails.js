@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from "react";
 import { FaStar, FaRegStar, FaEye, FaTrash, FaEllipsisV, FaMapMarkerAlt } from 'react-icons/fa';
-import { inspectionData } from './InspectionList';
+import inspectionsData from './inspections.json';
 import ThermalImageUpload from "./ThermalImageUpload";
 import transformerImagesJSON from "./TransformerImageList.json";
 
@@ -21,7 +21,7 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
   const baselineInputRef = useRef(null);
   const baselineUploadInterval = useRef(null);
 
-  const inspections = inspectionData.filter(ins => ins.no === transformer.no);
+  const inspections = inspectionsData.filter(ins => ins.no === transformer.no);
 
   const handleBaselineClick = () => baselineInputRef.current.click();
 

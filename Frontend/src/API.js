@@ -3,7 +3,7 @@
 
 export async function addInspection(inspectionData) {
 	// Replace with your actual backend endpoint
-	const endpoint = "https://mp13236c6e91f424920a.free.beeceptor.com/api/inspections";
+	const endpoint = "http://localhost:8080/api/inspections";
 	try {
 		const response = await fetch(endpoint, {
 			method: 'POST',
@@ -24,7 +24,7 @@ export async function addInspection(inspectionData) {
 
 export async function addTransformer(transformerData) {
 	// Replace with your actual backend endpoint
-	const endpoint = "https://mp13236c6e91f424920a.free.beeceptor.com/api/transformers";
+	const endpoint = "http://localhost:8080/api/transformers";
 	try {
 		const response = await fetch(endpoint, {
 			method: 'POST',
