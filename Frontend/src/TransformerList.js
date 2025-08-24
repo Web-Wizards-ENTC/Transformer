@@ -18,19 +18,19 @@ function TransformerList(props) {
   const pageSize = 10;
 
   // Fetch transformer data from backend
-  React.useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      try {
-        const data = await getTransformers();
-        setTransformers(data);
-      } catch (error) {
-        // Optionally handle error
-      } finally {
-        setLoading(false);
-      }
+  const fetchTransformers = async () => {
+    setLoading(true);
+    try {
+      const data = await getTransformers();
+      setTransformers(data);
+    } catch (error) {
+      // Optionally handle error
+    } finally {
+      setLoading(false);
     }
-    fetchData();
+  };
+  React.useEffect(() => {
+    fetchTransformers();
   }, []);
 
   const regions = ['All Regions', ...Array.from(new Set(transformers.map(t => t.region)))];
@@ -64,7 +64,7 @@ function TransformerList(props) {
 
   return (
     <div className="p-8 font-sans bg-gray-50 min-h-screen">
-      <AddTransformerModal open={modalOpen} setOpen={setModalOpen} />
+      <AddTransformerModal open={modalOpen} setOpen={setModalOpen} onAdded={fetchTransformers} />
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Transformers</h1>
         <button

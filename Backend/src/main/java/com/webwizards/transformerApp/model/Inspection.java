@@ -14,6 +14,8 @@ public class Inspection {
     private String transformerNo;   // transformer reference number
     private String date;            // you could also use LocalDate
     private String time;            // you could also use LocalTime
+    private String status;
+    private String maintainanceDate;
 
     // --- Getters & Setters ---
     public Long getId() { return id; }
@@ -30,4 +32,10 @@ public class Inspection {
 
     public String getTime() { return time; }
     public void setTime(String time) { this.time = time; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public String getMaintainanceDate() { return maintainanceDate; }
+    public void setMaintainanceDate(String maintainanceDate) { this.maintainanceDate = maintainanceDate; }
 }

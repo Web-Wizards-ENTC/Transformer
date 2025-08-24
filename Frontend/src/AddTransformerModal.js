@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { addTransformer } from "./API";
 
-export default function AddTransformerModal({ open, setOpen }) {
+export default function AddTransformerModal({ open, setOpen, onAdded }) {
   const [form, setForm] = useState({
     region: "",
     transformerNo: "",
@@ -18,7 +18,7 @@ export default function AddTransformerModal({ open, setOpen }) {
     async function submit() {
       try {
         await addTransformer(form);
-        // Optionally show success message or update UI
+        if (onAdded) onAdded(); // call refresh function
       } catch (error) {
         // Optionally show error message
         console.error(error);

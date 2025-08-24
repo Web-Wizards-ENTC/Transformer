@@ -4,8 +4,7 @@ import React, { useState } from 'react';
 import AddInspectionModal from './AddInspection';
 import './App.css';
 
-// Load inspection data from JSON file
-import inspectionsData from './inspections.json';
+import { getInspections } from './API';
 
 const statusColors = {
   'In Progress': 'bg-green-100 text-green-700',
@@ -17,21 +16,39 @@ function InspectionList(props) {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
+  const [inspections, setInspections] = useState([]);
+  const [loading, setLoading] = useState(true);
   const pageSize = 10;
+
+  // Fetch inspection data from backend
+  const fetchInspections = async () => {
+    setLoading(true);
+    try {
+      const data = await getInspections();
+      setInspections(data);
+    } catch (error) {
+      // Optionally handle error
+    } finally {
+      setLoading(false);
+    }
+  };
+  React.useEffect(() => {
+    fetchInspections();
+  }, []);
 
   React.useEffect(() => {
     setPage(1);
   }, [search]);
 
-  const filtered = inspectionsData.filter(t => {
+  const filtered = inspections.filter(t => {
     const s = search.trim().toLowerCase();
     if (!s) return true;
     return (
-      t.no.toLowerCase().includes(s) ||
-      t.inspectionNo.toLowerCase().includes(s) ||
-      t.inspected.toLowerCase().includes(s) ||
-      t.maintenance.toLowerCase().includes(s) ||
-      t.status.toLowerCase().includes(s)
+      t.transformerNo?.toLowerCase().includes(s) ||
+      t.inspectionNo?.toLowerCase().includes(s) ||
+      t.inspected?.toLowerCase().includes(s) ||
+      t.maintenance?.toLowerCase().includes(s) ||
+      t.status?.toLowerCase().includes(s)
     );
   });
 
@@ -40,7 +57,7 @@ function InspectionList(props) {
 
   return (
     <div className="p-8 font-sans bg-gray-50 min-h-screen">
-      <AddInspectionModal open={modalOpen} setOpen={setModalOpen} />
+  <AddInspectionModal open={modalOpen} setOpen={setModalOpen} onAdded={fetchInspections} />
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">All Inspections</h1>
         <button
@@ -74,38 +91,40 @@ function InspectionList(props) {
           </button>
         </div>
       </div>
-      <table className="w-full bg-white rounded shadow">
-        <thead>
-          <tr className="bg-indigo-100 text-indigo-700">
-            <th className="py-2 px-4 text-left">Transformer No.</th>
-            <th className="py-2 px-4 text-left">Inspection No</th>
-            <th className="py-2 px-4 text-left">Inspected Date</th>
-            <th className="py-2 px-4 text-left">Maintenance Date</th>
-            <th className="py-2 px-4 text-left">Status</th>
-            <th className="py-2 px-4"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {paginated.map((t, i) => (
-            <tr key={t.no + t.inspectionNo} className="border-b hover:bg-indigo-50">
-              <td className="py-2 px-4">{t.no}</td>
-              <td className="py-2 px-4">{t.inspectionNo}</td>
-              <td className="py-2 px-4">{t.inspected}</td>
-              <td className="py-2 px-4">{t.maintenance}</td>
-              <td className="py-2 px-4">
-                <span className={`px-3 py-1 rounded ${statusColors[t.status]}`}>{t.status}</span>
-              </td>
-              <td className="py-2 px-4 text-right">
-                <button
-                  className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700"
-                >
-                  View
-                </button>
-              </td>
+      {loading ? (
+        <div className="text-center py-8 text-gray-500">Loading inspections...</div>
+      ) : (
+        <table className="w-full bg-white rounded shadow">
+          <thead>
+            <tr className="bg-indigo-100 text-indigo-700">
+              <th className="py-2 px-4 text-left">Transformer No.</th>
+              <th className="py-2 px-4 text-left">Inspection No</th>
+              <th className="py-2 px-4 text-left">Inspected Date</th>
+              <th className="py-2 px-4 text-left">Maintenance Date</th>
+              <th className="py-2 px-4 text-left">Status</th>
+              <th className="py-2 px-4"></th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {paginated.map((t, i) => (
+              <tr key={t.transformerNo + '-' + t.id} className="border-b hover:bg-indigo-50">
+                <td className="py-2 px-4">{t.transformerNo}</td>
+                <td className="py-2 px-4">{t.id}</td>
+                <td className="py-2 px-4">{t.date} {t.time}</td>
+                <td className="py-2 px-4">{t.maintainanceDate}</td>
+                <td className={`py-2 px-4 ${statusColors[t.status] || ''}`}>{t.status}</td>
+                <td className="py-2 px-4 text-right">
+                  <button
+                    className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700"
+                  >
+                    View
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
       <div className="flex justify-center mt-6 gap-2">
         {Array.from({ length: totalPages }, (_, i) => (
           <button
