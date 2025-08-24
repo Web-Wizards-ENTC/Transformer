@@ -112,7 +112,7 @@ function InspectionList(props) {
                 <td className="py-2 px-4">{t.id}</td>
                 <td className="py-2 px-4">{t.date} {t.time}</td>
                 <td className="py-2 px-4">{t.maintainanceDate}</td>
-                <td className="py-2 px-4">{t.status}</td>
+                <td className={`py-2 px-4 ${statusColors[t.status] || ''}`}>{t.status}</td>
                 <td className="py-2 px-4 text-right">
                   <button
                     className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700"
