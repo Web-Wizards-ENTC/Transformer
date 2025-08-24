@@ -2,49 +2,22 @@ import React, { useState } from 'react';
 import AddTransformerModal from './AddTransformerModal';
 import './App.css';
 
-const transformerData = [
-  { no: 'AZ-8890', pole: 'EN-122-A', region: 'Nugegoda', type: 'Bulk' },
-  { no: 'AZ-1649', pole: 'EN-122-A', region: 'Nugegoda', type: 'Bulk' },
-  { no: 'AZ-7316', pole: 'EN-123-B', region: 'Nugegoda', type: 'Bulk' },
-  { no: 'AZ-4613', pole: 'EN-122-A', region: 'Nugegoda', type: 'Bulk' },
-  { no: 'AX-8993', pole: 'EN-123-A', region: 'Nugegoda', type: 'Distribution' },
-  { no: 'AY-8790', pole: 'EN-122-A', region: 'Nugegoda', type: 'Distribution' },
-  { no: 'AZ-4563', pole: 'EN-123-A', region: 'Maharagama', type: 'Bulk' },
-  { no: 'AZ-8523', pole: 'EN-123-A', region: 'Maharagama', type: 'Bulk' },
-  { no: 'AZ-8456', pole: 'EN-123-A', region: 'Maharagama', type: 'Bulk' },
-  { no: 'AZ-7896', pole: 'EN-123-A', region: 'Maharagama', type: 'Bulk' },
-  { no: 'AX-8990', pole: 'EN-123-A', region: 'Maharagama', type: 'Distribution' },
+// Load transformer data from JSON file
+import transformersData from './transformers.json';
 
-  { no: 'AZ-9403', pole: 'EN-123-A', region: 'Maharagama', type: 'Distribution' },
-
-  { no: 'AY-7701', pole: 'EN-124-A', region: 'Nugegoda', type: 'Bulk' },
-  { no: 'AZ-9052', pole: 'EN-124-B', region: 'Nugegoda', type: 'Bulk' },
-  { no: 'AZ-9063', pole: 'EN-125-A', region: 'Maharagama', type: 'Distribution' },
-  { no: 'AX-6004', pole: 'EN-125-B', region: 'Maharagama', type: 'Bulk' },
-  { no: 'AY-8405', pole: 'EN-126-A', region: 'Nugegoda', type: 'Distribution' },
-  { no: 'AZ-9006', pole: 'EN-126-B', region: 'Maharagama', type: 'Bulk' },
-  { no: 'AX-7007', pole: 'EN-127-A', region: 'Nugegoda', type: 'Bulk' },
-  { no: 'AZ-9608', pole: 'EN-127-B', region: 'Maharagama', type: 'Distribution' },
-  { no: 'AY-8069', pole: 'EN-128-A', region: 'Nugegoda', type: 'Bulk' },
-];
-
-const regions = ['All Regions', ...Array.from(new Set(transformerData.map(t => t.region)))];
-const types = ['All Types', ...Array.from(new Set(transformerData.map(t => t.type)))];
+const regions = ['All Regions', ...Array.from(new Set(transformersData.map(t => t.region)))];
+const types = ['All Types', ...Array.from(new Set(transformersData.map(t => t.type)))];
 
 function TransformerList(props) {
   const [region, setRegion] = useState('All Regions');
   const [type, setType] = useState('All Types');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const transformers = transformersData;
   const pageSize = 10;
 
-  // Reset page to 1 when filters/search change
-  React.useEffect(() => {
-    setPage(1);
-  }, [region, type, search]);
-
   // Filtering logic
-  let filtered = transformerData;
+  let filtered = transformers;
   if (region !== 'All Regions') {
     filtered = filtered.filter(t => t.region === region);
   }
@@ -62,6 +35,11 @@ function TransformerList(props) {
   const totalPages = Math.ceil(filtered.length / pageSize);
 
   const [modalOpen, setModalOpen] = useState(false);
+
+  // Reset page to 1 when filters/search change
+  React.useEffect(() => {
+    setPage(1);
+  }, [region, type, search]);
 
   return (
     <div className="p-8 font-sans bg-gray-50 min-h-screen">
@@ -125,12 +103,10 @@ function TransformerList(props) {
               <td className="py-2 px-4 text-right">
                 <button 
                   className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700"
-
                   onClick={() => {
                     props.setSelectedTransformer(t); // Pass the row transformer
                     props.setPage('inspectionDetails'); // Go to details page
                   }}
-
                 >
                   View
                 </button>

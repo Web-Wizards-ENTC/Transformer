@@ -1,0 +1,23 @@
+[
+  { "no": "AZ-8890", "pole": "EN-122-A", "region": "Nugegoda", "type": "Bulk" },
+  { "no": "AZ-1649", "pole": "EN-122-A", "region": "Nugegoda", "type": "Bulk" },
+  { "no": "AZ-7316", "pole": "EN-123-B", "region": "Nugegoda", "type": "Bulk" },
+  { "no": "AZ-4613", "pole": "EN-122-A", "region": "Nugegoda", "type": "Bulk" },
+  { "no": "AX-8993", "pole": "EN-123-A", "region": "Nugegoda", "type": "Distribution" },
+  { "no": "AY-8790", "pole": "EN-122-A", "region": "Nugegoda", "type": "Distribution" },
+  { "no": "AZ-4563", "pole": "EN-123-A", "region": "Maharagama", "type": "Bulk" },
+  { "no": "AZ-8523", "pole": "EN-123-A", "region": "Maharagama", "type": "Bulk" },
+  { "no": "AZ-8456", "pole": "EN-123-A", "region": "Maharagama", "type": "Bulk" },
+  { "no": "AZ-7896", "pole": "EN-123-A", "region": "Maharagama", "type": "Bulk" },
+  { "no": "AX-8990", "pole": "EN-123-A", "region": "Maharagama", "type": "Distribution" },
+  { "no": "AZ-9403", "pole": "EN-123-A", "region": "Maharagama", "type": "Distribution" },
+  { "no": "AY-7701", "pole": "EN-124-A", "region": "Nugegoda", "type": "Bulk" },
+  { "no": "AZ-9052", "pole": "EN-124-B", "region": "Nugegoda", "type": "Bulk" },
+  { "no": "AZ-9063", "pole": "EN-125-A", "region": "Maharagama", "type": "Distribution" },
+  { "no": "AX-6004", "pole": "EN-125-B", "region": "Maharagama", "type": "Bulk" },
+  { "no": "AY-8405", "pole": "EN-126-A", "region": "Nugegoda", "type": "Distribution" },
+  { "no": "AZ-9006", "pole": "EN-126-B", "region": "Maharagama", "type": "Bulk" },
+  { "no": "AX-7007", "pole": "EN-127-A", "region": "Nugegoda", "type": "Bulk" },
+  { "no": "AZ-9608", "pole": "EN-127-B", "region": "Maharagama", "type": "Distribution" },
+  { "no": "AY-8069", "pole": "EN-128-A", "region": "Nugegoda", "type": "Bulk" }
+]
