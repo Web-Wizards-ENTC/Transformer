@@ -98,8 +98,8 @@ function InspectionList(props) {
           <thead>
             <tr className="bg-indigo-100 text-indigo-700">
               <th className="py-2 px-4 text-left">Transformer No.</th>
-              <th className="py-2 px-4 text-left">Inspection No</th>
-              <th className="py-2 px-4 text-left">Inspected Date</th>
+              <th className="py-2 px-4 text-left">Inspection No.</th>
+              <th className="py-2 px-4 text-left">Inspection Date & Time</th>
               <th className="py-2 px-4 text-left">Maintenance Date</th>
               <th className="py-2 px-4 text-left">Status</th>
               <th className="py-2 px-4"></th>
