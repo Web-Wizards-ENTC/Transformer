@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { addTransformer } from "./API";
 
-export default function AddTransformerModal({ open, setOpen }) {
+export default function AddTransformerModal({ open, setOpen, onAdded }) {
   const [form, setForm] = useState({
     region: "",
     transformerNo: "",
@@ -18,7 +18,7 @@ export default function AddTransformerModal({ open, setOpen }) {
     async function submit() {
       try {
         await addTransformer(form);
-        // Optionally show success message or update UI
+        if (onAdded) onAdded(); // call refresh function
       } catch (error) {
         // Optionally show error message
         console.error(error);
@@ -53,15 +53,16 @@ export default function AddTransformerModal({ open, setOpen }) {
                 onChange={(e) => handleChange("region", e.target.value)}
               >
                 <option value="">Region</option>
-                <option value="colombo">Nugegoda</option>
-                <option value="colombo-0">Maharagama</option>
-                <option value="colombo-1">Kotuwa</option>
-                <option value="colombo-2">Kompanyaweediya</option>
-                <option value="colombo-3">Kollupitiya</option>
-                <option value="colombo-4">Bambalapitiya</option>
-                <option value="colombo-5">Havelock Town</option>
-                <option value="colombo-6">Wellawatte</option>
-                <option value="colombo-7">Kurunduwatte</option>
+                <option value="Nugegoda">Nugegoda</option>
+                <option value="Maharagama">Maharagama</option>
+                <option value="Kotuwa">Kotuwa</option>
+                <option value="Kompanyaweediya">Kompanyaweediya</option>
+                <option value="Kollupitiya">Kollupitiya</option>
+                <option value="Bambalapitiya">Bambalapitiya</option>
+                <option value="Gampola">Gampola</option>
+                <option value="Wellawatte">Wellawatte</option>
+                <option value="Kegalle">Kegalle</option>
+                <option value="Moratuwa">Moratuwa</option>
               </select>
 
               {/* Transformer No */}
@@ -89,8 +90,8 @@ export default function AddTransformerModal({ open, setOpen }) {
                 onChange={(e) => handleChange("type", e.target.value)}
               >
                 <option value="">Type</option>
-                <option value="bulk">Bulk</option>
-                <option value="distribution">Distribution</option>
+                <option value="Bulk">Bulk</option>
+                <option value="Distribution">Distribution</option>
               </select>
 
               {/* Location Details */}

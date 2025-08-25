@@ -3,18 +3,39 @@ import AddTransformerModal from './AddTransformerModal';
 import './App.css';
 
 // Load transformer data from JSON file
-import transformersData from './transformers.json';
+import { getTransformers } from './API';
 
-const regions = ['All Regions', ...Array.from(new Set(transformersData.map(t => t.region)))];
-const types = ['All Types', ...Array.from(new Set(transformersData.map(t => t.type)))];
+
+
 
 function TransformerList(props) {
   const [region, setRegion] = useState('All Regions');
   const [type, setType] = useState('All Types');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
-  const transformers = transformersData;
+  const [transformers, setTransformers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const pageSize = 10;
+
+  // Fetch transformer data from backend
+  const fetchTransformers = async () => {
+    setLoading(true);
+    try {
+      const data = await getTransformers();
+      setTransformers(data);
+    } catch (error) {
+      // Optionally handle error
+    } finally {
+      setLoading(false);
+    }
+  };
+  React.useEffect(() => {
+    fetchTransformers();
+  }, []);
+
+  const regions = ['All Regions', ...Array.from(new Set(transformers.map(t => t.region)))];
+  const types = ['All Types', ...Array.from(new Set(transformers.map(t => t.type)))];
+
 
   // Filtering logic
   let filtered = transformers;
@@ -43,7 +64,7 @@ function TransformerList(props) {
 
   return (
     <div className="p-8 font-sans bg-gray-50 min-h-screen">
-      <AddTransformerModal open={modalOpen} setOpen={setModalOpen} />
+      <AddTransformerModal open={modalOpen} setOpen={setModalOpen} onAdded={fetchTransformers} />
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Transformers</h1>
         <button
@@ -83,49 +104,55 @@ function TransformerList(props) {
           </button>
         </div>
       </div>
-      <table className="w-full bg-white rounded shadow">
-        <thead>
-          <tr className="bg-indigo-100 text-indigo-700">
-            <th className="py-2 px-4 text-left">Transformer No.</th>
-            <th className="py-2 px-4 text-left">Pole No.</th>
-            <th className="py-2 px-4 text-left">Region</th>
-            <th className="py-2 px-4 text-left">Type</th>
-            <th className="py-2 px-4"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {paginated.map((t, i) => (
-            <tr key={t.no} className="border-b hover:bg-indigo-50">
-              <td className="py-2 px-4">{t.no}</td>
-              <td className="py-2 px-4">{t.pole}</td>
-              <td className="py-2 px-4">{t.region}</td>
-              <td className="py-2 px-4">{t.type}</td>
-              <td className="py-2 px-4 text-right">
-                <button 
-                  className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700"
-                  onClick={() => {
-                    props.setSelectedTransformer(t); // Pass the row transformer
-                    props.setPage('inspectionDetails'); // Go to details page
-                  }}
-                >
-                  View
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <div className="flex justify-center mt-6 gap-2">
-        {Array.from({ length: totalPages }, (_, i) => (
-          <button
-            key={i + 1}
-            className={`px-3 py-1 rounded ${page === i + 1 ? 'bg-indigo-600 text-white' : 'bg-indigo-100 text-indigo-700'}`}
-            onClick={() => setPage(i + 1)}
-          >
-            {i + 1}
-          </button>
-        ))}
-      </div>
+      {loading ? (
+        <div className="text-center py-8 text-gray-500">Loading transformers...</div>
+      ) : (
+        <>
+          <table className="w-full bg-white rounded shadow">
+            <thead>
+              <tr className="bg-indigo-100 text-indigo-700">
+                <th className="py-2 px-4 text-left">Transformer No.</th>
+                <th className="py-2 px-4 text-left">Pole No.</th>
+                <th className="py-2 px-4 text-left">Region</th>
+                <th className="py-2 px-4 text-left">Type</th>
+                <th className="py-2 px-4"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginated.map((t, i) => (
+                <tr key={t.no} className="border-b hover:bg-indigo-50">
+                  <td className="py-2 px-4">{t.transformerNo}</td>
+                  <td className="py-2 px-4">{t.poleNo}</td>
+                  <td className="py-2 px-4">{t.region}</td>
+                  <td className="py-2 px-4">{t.type}</td>
+                  <td className="py-2 px-4 text-right">
+                    <button 
+                      className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700"
+                      onClick={() => {
+                        props.setSelectedTransformer(t); // Pass the row transformer
+                        props.setPage('inspectionDetails'); // Go to details page
+                      }}
+                    >
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="flex justify-center mt-6 gap-2">
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                className={`px-3 py-1 rounded ${page === i + 1 ? 'bg-indigo-600 text-white' : 'bg-indigo-100 text-indigo-700'}`}
+                onClick={() => setPage(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
