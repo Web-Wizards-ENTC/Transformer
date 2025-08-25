@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { FaStar, FaRegStar, FaEye, FaTrash, FaEllipsisV, FaMapMarkerAlt } from 'react-icons/fa';
 import inspectionsData from './inspections.json';
 
-import { getInspections, uploadTransformerBase, getTransformerImage } from './API';
+import { getInspections, uploadTransformerBase, getTransformerBaseImage } from './API';
 import ThermalImageUpload from "./ThermalImageUpload";
 
 const statusColors = {
@@ -27,7 +27,7 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
     // fetch baseline image from backend
     const fetchBaseline = async () => {
       try {
-        const url = await getTransformerImage(transformer.no); // only transformer number
+        const url = await getTransformerBaseImage(transformer.no); // only transformer number
         setBaselineImageUrl(url);
       } catch (err) {
         console.error("No baseline image found", err);
@@ -52,7 +52,7 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
 
           // upload to backend
           uploadTransformerBase(file, transformer.no)
-            .then(() => getTransformerImage(transformer.no))
+            .then(() => getTransformerBaseImage(transformer.no))
             .then(url => setBaselineImageUrl(url))
             .catch(err => console.error("Upload failed", err));
 
@@ -72,6 +72,14 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
 
   return (
     <div className="p-8 font-sans bg-gray-50 min-h-screen">
+      {/* Back button */}
+      <button
+        className="bg-gray-200 text-gray-700 px-4 py-2 rounded shadow hover:bg-gray-300 mb-4"
+        onClick={onBack}
+      >
+        Back
+      </button>
+
       {/* Transformer header */}
       <div className="flex justify-between items-start mb-6">
         <div>
@@ -91,7 +99,7 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
 
           <div className="flex gap-2 mb-2">
             <div className="bg-gray-100 border border-gray-200 px-4 py-1 rounded-md">
-              <div className="text-center text-gray-800 font-medium">{transformer.pole}</div>
+              <div className="text-center text-gray-800 font-medium">{transformer.poleNo}</div>
               <div className="text-center text-gray-500 text-xs">Pole No</div>
             </div>
             <div className="bg-gray-100 border border-gray-200 px-4 py-1 rounded-md">

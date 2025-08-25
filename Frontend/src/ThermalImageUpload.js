@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { uploadTransformerCurrent, getTransformerImage } from "./API";
+import { uploadTransformerCurrent, getTransformerBaseImage } from "./API";
 
 export default function ThermalImageUpload({ transformerNo, inspections }) {
   const [uploading, setUploading] = useState(false);
@@ -16,11 +16,11 @@ export default function ThermalImageUpload({ transformerNo, inspections }) {
   useEffect(() => {
     const fetchImages = async () => {
       try {
-        const baselineUrl = await getTransformerImage(transformerNo);
+        const baselineUrl = await getTransformerBaseImage(transformerNo);
         setBaselineImage(baselineUrl);
 
         if (inspections.length > 0) {
-          const thermalUrl = await getTransformerImage(transformerNo, inspections[0].inspectionNo);
+          const thermalUrl = await getTransformerBaseImage(transformerNo, inspections[0].inspectionNo);
           setThermalImages([[thermalUrl, inspections[0].inspected, ""]]);
         }
       } catch (err) {
@@ -47,7 +47,7 @@ export default function ThermalImageUpload({ transformerNo, inspections }) {
           setUploading(false);
 
           uploadTransformerCurrent(file, transformerNo, inspections[0].inspectionNo)
-            .then(() => getTransformerImage(transformerNo, inspections[0].inspectionNo))
+            .then(() => getTransformerBaseImage(transformerNo, inspections[0].inspectionNo))
             .then(url => setThermalImages([[url, new Date().toLocaleDateString(), new Date().toLocaleTimeString()]]))
             .catch(err => console.error("Upload failed", err));
 
