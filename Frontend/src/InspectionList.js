@@ -109,10 +109,17 @@ function InspectionList(props) {
             {paginated.map((t, i) => (
               <tr key={t.transformerNo + '-' + t.id} className="border-b hover:bg-indigo-50">
                 <td className="py-2 px-4">{t.transformerNo}</td>
-                <td className="py-2 px-4">{t.id}</td>
+                <td className="py-2 px-4">{String(t.id).padStart(6, '0')}</td>
                 <td className="py-2 px-4">{t.date} {t.time}</td>
                 <td className="py-2 px-4">{t.maintainanceDate}</td>
-                <td className={`py-2 px-4 ${statusColors[t.status] || ''}`}>{t.status}</td>
+                <td className="py-2 px-4">
+                  <span
+                    className={`inline-block min-w-[100px] px-3 py-1 rounded-lg font-semibold text-center shadow-sm ${statusColors[t.status] || ''}`}
+                    style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+                  >
+                    {t.status}
+                  </span>
+                </td>
                 <td className="py-2 px-4 text-right">
                   <button
                     className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700"
