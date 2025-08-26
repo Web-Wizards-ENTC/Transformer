@@ -26,7 +26,9 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
   const baselineUploadInterval = useRef(null);
 
   // Use transformerNo for matching inspections
-  const inspections = inspectionsData.filter(ins => ins.no === transformer.transformerNo);
+  const [inspections, setInspections] = useState(
+    inspectionsData.filter(ins => ins.no === transformer.transformerNo)
+  );
 
   const handleBaselineClick = () => baselineInputRef.current.click();
 
@@ -136,7 +138,22 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
         <div className="bg-white rounded shadow p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">Transformer Inspections</h2>
-            <button className="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700">Add Inspection</button>
+            <button
+              className="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700"
+              onClick={() => {
+                // Mock new inspection entry
+                const newInspection = {
+                  inspectionNo: `INSP${Date.now()}`,
+                  inspected: new Date().toISOString().split('T')[0],
+                  maintenance: '-',
+                  status: 'Pending',
+                  no: transformer.transformerNo
+                };
+                setInspections(prev => [newInspection, ...prev]);
+              }}
+            >
+              Add Inspection
+            </button>
           </div>
           <table className="w-full bg-white rounded shadow">
             <thead>
