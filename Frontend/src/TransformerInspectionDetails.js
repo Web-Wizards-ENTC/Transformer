@@ -18,6 +18,10 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
   const [baselineProgress, setBaselineProgress] = useState(0);
   const [transformerImages, setTransformerImages] = useState({...transformerImagesJSON});
 
+  React.useEffect(() => {
+    void transformerImages;
+  }, [transformerImages]);
+
   const baselineInputRef = useRef(null);
   const baselineUploadInterval = useRef(null);
 
