@@ -95,7 +95,7 @@ export default function ThermalImageUpload({ inspection }) {
 										<img src={baselineImage} alt="Baseline" className="w-full h-72 object-cover rounded-lg bg-gray-100" />
 										<span className="absolute top-0 left-0 mt-4 ml-4 bg-indigo-700 text-white text-sm px-3 py-1 rounded shadow">Baseline</span>
 									</div>
-									<span className="text-xs text-gray-500 mt-1">1/6/2025 9:10 PM</span>
+									<span className="text-xs text-gray-500 mt-1">26/8/2025 9:30 PM</span>
 								</div>
 								{/* Current Image */}
 								<div className="relative w-full flex flex-col items-center">
@@ -103,7 +103,7 @@ export default function ThermalImageUpload({ inspection }) {
 										<img src={thermalImage ? URL.createObjectURL(thermalImage) : "/Transformer-Current.jpg"} alt="Current" className="w-full h-72 object-cover rounded-lg bg-gray-100" />
 										<span className="absolute top-0 left-0 mt-4 ml-4 bg-indigo-700 text-white text-sm px-3 py-1 rounded shadow">Current</span>
 									</div>
-									<span className="text-xs text-gray-500 mt-1">26/8/2025 8:34 PM</span>
+									<span className="text-xs text-gray-500 mt-1">26/8/2025 9:31 PM</span>
 								</div>
 							</div>
 						</div>
