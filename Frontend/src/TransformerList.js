@@ -37,8 +37,15 @@ function TransformerList(props) {
   const types = ['All Types', ...Array.from(new Set(transformers.map(t => t.type)))];
 
 
-  // Filtering logic
-  let filtered = transformers;
+  // Sort by last added time (newest first)
+  let filtered = [...transformers];
+  filtered.sort((a, b) => {
+    // If createdAt exists, sort by it; otherwise, sort by array order
+    if (b.createdAt && a.createdAt) {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    }
+    return 0;
+  });
   if (region !== 'All Regions') {
     filtered = filtered.filter(t => t.region === region);
   }

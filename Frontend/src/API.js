@@ -73,64 +73,14 @@ export async function addTransformer(transformerData) {
 	}
 }
 
-export async function uploadTransformerCurrent(imageFile, text1, text2) {
-	const endpoint = "http://localhost:8080/api/transformersBase";
+export async function uploadTransformerCurrent(imageFile, inspectionId) {
+	const endpoint = "http://localhost:8080/api/images";
 
 	try {
-		// Create FormData and append both file + texts
+		// Create FormData and append file + inspectionId
 		const formData = new FormData();
-		formData.append("image", imageFile);  // file
-		formData.append("text1", text1);      // first text
-		formData.append("text2", text2);      // second text
-
-		const response = await fetch(endpoint, {
-			method: "POST",
-			body: formData,  // send as multipart/form-data
-		});
-
-		if (!response.ok) {
-			throw new Error("Failed to upload data");
-		}
-
-		return await response.json(); // adjust if backend returns text
-	} catch (error) {
-		console.error(error);
-		throw error;
-	}
-}
-
-export async function uploadTransformerBase(imageFile, text1) {
-	const endpoint = "http://localhost:8080/api/transformersCurrent";
-
-	try {
-		// Create FormData and append both file + texts
-		const formData = new FormData();
-		formData.append("image", imageFile);  // file
-		formData.append("text1", text1);      // first text
-
-		const response = await fetch(endpoint, {
-			method: "POST",
-			body: formData,  // send as multipart/form-data
-		});
-
-		if (!response.ok) {
-			throw new Error("Failed to upload data");
-		}
-
-		return await response.json(); // adjust if backend returns text
-	} catch (error) {
-		console.error(error);
-		throw error;
-	}
-}
-
-export async function getTransformerCurrentImage(text1, text2) {
-	const endpoint = "http://localhost:8080/api/transformersCurrentgetImage";
-
-	try {
-		const formData = new FormData();
-		formData.append("text1", text1);
-		formData.append("text2", text2);
+		formData.append("file", imageFile);
+		formData.append("inspectionId", inspectionId);
 
 		const response = await fetch(endpoint, {
 			method: "POST",
@@ -138,7 +88,48 @@ export async function getTransformerCurrentImage(text1, text2) {
 		});
 
 		if (!response.ok) {
-			throw new Error("Failed to fetch image");
+			throw new Error("Failed to upload thermal image");
+		}
+
+		return await response.json(); // returns the InspectionImage object
+	} catch (error) {
+		console.error(error);
+		throw error;
+	}
+}
+
+
+export async function uploadTransformerBase(imageFile, inspectionId) {
+	const endpoint = "http://localhost:8080/api/images";
+	try {
+		const formData = new FormData();
+		formData.append("inspectionId", inspectionId); // must be inspectionId
+		formData.append("file", imageFile);            // must be file
+
+		const response = await fetch(endpoint, {
+			method: "POST",
+			body: formData,
+		});
+
+		if (!response.ok) {
+			throw new Error("Failed to upload image");
+		}
+
+		return await response.json(); // returns the InspectionImage object (including its id)
+	} catch (error) {
+		console.error(error);
+		throw error;
+	}
+}
+
+export async function getTransformerCurrentImage(imageId) {
+	const endpoint = `http://localhost:8080/api/images/${imageId}`;
+
+	try {
+		const response = await fetch(endpoint);
+
+		if (!response.ok) {
+			throw new Error("Failed to fetch thermal image");
 		}
 
 		// Get image as a Blob
@@ -154,28 +145,16 @@ export async function getTransformerCurrentImage(text1, text2) {
 }
 
 
-export async function getTransformerBaseImage(text1) {
-	const endpoint = "http://localhost:8080/api/transformersBasegetImage";
 
+export async function getTransformerBaseImage(imageId) {
+	const endpoint = `http://localhost:8080/api/images/${imageId}`;
 	try {
-		const formData = new FormData();
-		formData.append("text1", text1);
-
-		const response = await fetch(endpoint, {
-			method: "POST",
-			body: formData,
-		});
-
+		const response = await fetch(endpoint);
 		if (!response.ok) {
 			throw new Error("Failed to fetch image");
 		}
-
-		// Get image as a Blob
 		const blob = await response.blob();
-
-		// Convert blob to an object URL so React can display it
-		const imageUrl = URL.createObjectURL(blob);
-		return imageUrl;
+		return URL.createObjectURL(blob);
 	} catch (error) {
 		console.error(error);
 		throw error;
