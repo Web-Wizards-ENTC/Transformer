@@ -74,12 +74,12 @@ Based on the demo video, here's how to use the key features:
 
 * **Managing Transformers:** On the main `Transformers` page, you can see a table of all existing transformers. To add a new one, click the **'Add Transformer'** button, fill in the details in the popup form, and click **'Confirm'**. A new row will appear in the table. You can also use the **'View'** button next to any transformer to see its associated inspections.
 
-![](1.png)
+![](Images/1.png)
 
 * **Viewing and Adding Inspections:** From the `Transformers` page, click the **'View'** button for a specific transformer to go to its dedicated inspection page. To add a new inspection, click **'Add Inspection'**, enter the details, and click **'Confirm'**.
 
-![](2.png)
-![](3.png)
+![](Images/2.png)
+![](Images/3.png)
 
 * **Uploading Thermal Images:** On an individual inspection page, click **'View'** for a specific inspection. On the next page, you'll see options to upload images.
     * First, select the **weather condition** from the dropdown menu (Sunny, Cloudy, or Rainy).
