@@ -63,6 +63,8 @@ function TransformerList(props) {
   const totalPages = Math.ceil(filtered.length / pageSize);
 
   const [modalOpen, setModalOpen] = useState(false);
+    // State to track which row's menu is open
+    const [menuOpenIndex, setMenuOpenIndex] = useState(null);
 
   // Reset page to 1 when filters/search change
   React.useEffect(() => {
@@ -127,21 +129,50 @@ function TransformerList(props) {
             </thead>
             <tbody>
               {paginated.map((t, i) => (
-                <tr key={t.no} className="border-b hover:bg-indigo-50">
+                <tr key={t.no} className="border-b hover:bg-indigo-50 relative">
                   <td className="py-2 px-4">{t.transformerNo}</td>
                   <td className="py-2 px-4">{t.poleNo}</td>
                   <td className="py-2 px-4">{t.region}</td>
                   <td className="py-2 px-4">{t.type}</td>
-                  <td className="py-2 px-4 text-right">
+                  <td className="py-2 px-4 text-right flex items-center justify-end gap-2">
                     <button 
                       className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700"
                       onClick={() => {
-                        props.setSelectedTransformer(t); // Pass the row transformer
-                        props.setPage('inspectionDetails'); // Go to details page
+                        props.setSelectedTransformer(t);
+                        props.setPage('inspectionDetails');
                       }}
                     >
                       View
                     </button>
+                    <div className="relative">
+                      <button
+                        className="px-2 py-1 text-xl hover:bg-gray-200 rounded"
+                        onClick={() => setMenuOpenIndex(menuOpenIndex === i ? null : i)}
+                        aria-label="Options"
+                      >
+                        &#8942;
+                      </button>
+                      {menuOpenIndex === i && (
+                        <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-10">
+                          <button
+                            className="block w-full text-left px-4 py-2 hover:bg-indigo-50"
+                            onClick={() => {
+                              setMenuOpenIndex(null);
+                              // TODO: Implement edit logic
+                              alert('Edit clicked for ' + t.transformerNo);
+                            }}
+                          >Edit</button>
+                          <button
+                            className="block w-full text-left px-4 py-2 hover:bg-red-50 text-red-600"
+                            onClick={() => {
+                              setMenuOpenIndex(null);
+                              // TODO: Implement delete logic
+                              alert('Delete clicked for ' + t.transformerNo);
+                            }}
+                          >Delete</button>
+                        </div>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
