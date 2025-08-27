@@ -86,6 +86,7 @@ Based on the demo video, here's how to use the key features:
 
 ![](4.png)
 
+*
     * Click the large **'Upload thermal image'** button to open your file explorer and upload a **maintenance image**.
     * Select the **baseline image** button and upload a **baseline image**.
     * Once both images are uploaded, the system will display a side-by-side comparison of the baseline and current maintenance images.
