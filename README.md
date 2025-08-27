@@ -85,7 +85,7 @@ Based on the demo video, here's how to use the key features:
 * **Uploading Thermal Images:** On an individual inspection page, click **'View'** for a specific inspection. On the next page, you'll see options to upload images.
     * First, select the **weather condition** from the dropdown menu (Sunny, Cloudy, or Rainy).
 
-![](4.png)
+![](Images/4.png)
 
 *
     * Click the large **'Upload thermal image'** button to open your file explorer and upload a **maintenance image**.
