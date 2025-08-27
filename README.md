@@ -79,6 +79,7 @@ Based on the demo video, here's how to use the key features:
 * **Viewing and Adding Inspections:** From the `Transformers` page, click the **'View'** button for a specific transformer to go to its dedicated inspection page. To add a new inspection, click **'Add Inspection'**, enter the details, and click **'Confirm'**.
 
 ![](Images/2.png)
+
 ![](Images/3.png)
 
 * **Uploading Thermal Images:** On an individual inspection page, click **'View'** for a specific inspection. On the next page, you'll see options to upload images.
