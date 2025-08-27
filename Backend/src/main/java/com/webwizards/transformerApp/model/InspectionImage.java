@@ -10,13 +10,13 @@ public class InspectionImage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String fileName;
-    private String filePath;
-    private String contentType;
-
     @ManyToOne
     @JoinColumn(name = "inspection_id", nullable = false)
     private Inspection inspection;
+
+    private String fileName;
+    private String filePath;
+    private String contentType;
 
     // Getters & Setters
     public Long getId() { return id; }

@@ -1,6 +1,8 @@
 package com.webwizards.transformerApp.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "inspections")
@@ -8,34 +10,41 @@ public class Inspection {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "inspection_id")
+    private Long inspectionId;
 
-    private String branch;
-    private String transformerNo;   // transformer reference number
-    private String date;            // you could also use LocalDate
-    private String time;            // you could also use LocalTime
-    private String status;
-    private String maintainanceDate;
+    @ManyToOne
+    @JoinColumn(name = "transformer_no", nullable = false) // FK to transformer_no
+    private Transformer transformer;
+
+    @Column(nullable = false)
+    private LocalDate date;
+
+    @Column(nullable = false)
+    private LocalTime time;
+
+    @Column(nullable = false)
+    private String status = "Pending";
+
+    @Column(name = "maintenance_date")
+    private LocalDate maintenanceDate;
 
     // --- Getters & Setters ---
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getInspectionId() { return inspectionId; }
+    public void setInspectionId(Long inspectionId) { this.inspectionId = inspectionId; }
 
-    public String getBranch() { return branch; }
-    public void setBranch(String branch) { this.branch = branch; }
+    public Transformer getTransformer() { return transformer; }
+    public void setTransformer(Transformer transformer) { this.transformer = transformer; }
 
-    public String getTransformerNo() { return transformerNo; }
-    public void setTransformerNo(String transformerNo) { this.transformerNo = transformerNo; }
+    public LocalDate getDate() { return date; }
+    public void setDate(LocalDate date) { this.date = date; }
 
-    public String getDate() { return date; }
-    public void setDate(String date) { this.date = date; }
-
-    public String getTime() { return time; }
-    public void setTime(String time) { this.time = time; }
+    public LocalTime getTime() { return time; }
+    public void setTime(LocalTime time) { this.time = time; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
-    public String getMaintainanceDate() { return maintainanceDate; }
-    public void setMaintainanceDate(String maintainanceDate) { this.maintainanceDate = maintainanceDate; }
+    public LocalDate getMaintenanceDate() { return maintenanceDate; }
+    public void setMaintenanceDate(LocalDate maintenanceDate) { this.maintenanceDate = maintenanceDate; }
 }
