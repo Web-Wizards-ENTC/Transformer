@@ -22,11 +22,6 @@ Power utilities can use this system to digitize their thermal inspection workflo
 * **FR1.3: Categorization by Environmental Conditions**
     * When uploading a baseline image, users must tag it with the observed environmental condition: **Sunny**, **Cloudy**, or **Rainy**.
     * This condition is selected using a dropdown menu during the upload process.
-* **Additional Technical Features**
-    * Images are stored and retrieved efficiently for quick viewing.
-    * All transformer and image metadata are stored in a **PostgreSQL** database.
-    * The admin interface is fully accessible via a web browser.
-    * The modular architecture is designed to support easy extension in future development phases.
 
 ---
 
@@ -95,7 +90,7 @@ Based on the demo video, here's how to use the key features:
 ---
 
 ### **Test Data**
-The repository includes seed data for initial testing, with a minimum of **5 transformer records**. Each of these records contains baseline images for all three environmental conditions: sunny, cloudy, and rainy.
+The repository includes seed data for initial testing. Each of these records contains baseline images for all three environmental conditions: sunny, cloudy, and rainy.
 
 ---
 
@@ -106,7 +101,7 @@ The repository includes seed data for initial testing, with a minimum of **5 tra
 
 ---
 
-### **Bonus / Additional Features**
+### **Additional Features**
 * **Responsive UI:** The admin dashboard is designed to be responsive, providing a consistent experience across different devices.
 * **Modular Code:** The codebase is structured with a modular architecture to ensure easy extension and maintenance in future phases.
 * **Database Integration:** The PostgreSQL database is used effectively to store and manage all transformer metadata.
