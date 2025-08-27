@@ -7,7 +7,8 @@ export default function AddTransformerModal({ open, setOpen, onAdded }) {
     transformerNo: "",
     poleNo: "",
     type: "",
-    locationDetails: ""
+    locationDetails: "",
+    status: "Pending" // Default status
   });
 
   const handleChange = (field, value) => {
@@ -17,7 +18,8 @@ export default function AddTransformerModal({ open, setOpen, onAdded }) {
   const handleConfirm = () => {
     async function submit() {
       try {
-        await addTransformer(form);
+        // Always send status: 'Pending' when adding
+        await addTransformer({ ...form, status: 'Pending' });
         if (onAdded) onAdded(); // call refresh function
       } catch (error) {
         // Optionally show error message
