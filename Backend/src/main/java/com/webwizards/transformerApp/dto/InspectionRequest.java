@@ -1,17 +1,29 @@
 package com.webwizards.transformerApp.dto;
 
 public class InspectionRequest {
-    private Long transformerId;   // <-- user will send this
-    private String inspectorName;
-    private String notes;
+    private String branch;
+    private String transformerNo;
+    private String date;
+    private String time;
+    private String status;
+    private String maintainanceDate;
 
-    // Getters and setters
-    public Long getTransformerId() { return transformerId; }
-    public void setTransformerId(Long transformerId) { this.transformerId = transformerId; }
+    // --- Getters and Setters ---
+    public String getBranch() { return branch; }
+    public void setBranch(String branch) { this.branch = branch; }
 
-    public String getInspectorName() { return inspectorName; }
-    public void setInspectorName(String inspectorName) { this.inspectorName = inspectorName; }
+    public String getTransformerNo() { return transformerNo; }
+    public void setTransformerNo(String transformerNo) { this.transformerNo = transformerNo; }
 
-    public String getNotes() { return notes; }
-    public void setNotes(String notes) { this.notes = notes; }
+    public String getDate() { return date; }
+    public void setDate(String date) { this.date = date; }
+
+    public String getTime() { return time; }
+    public void setTime(String time) { this.time = time; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public String getMaintainanceDate() { return maintainanceDate; }
+    public void setMaintainanceDate(String maintainanceDate) { this.maintainanceDate = maintainanceDate; }
 }

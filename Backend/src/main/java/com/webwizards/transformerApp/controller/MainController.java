@@ -28,6 +28,7 @@ import java.nio.file.Path;
 
 
 
+@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api")
 public class MainController {
@@ -55,21 +56,18 @@ public class MainController {
 
     @PostMapping("/inspections")
     public Inspection addInspection(@RequestBody InspectionRequest request) {
-        // 1. Find the transformer by id
-        Transformer transformer = transformerRepo.findById(request.getTransformerId())
-                .orElseThrow(() -> new RuntimeException("Transformer not found"));
-
-        // 2. Create a new Inspection
-        Inspection inspection = new Inspection();
-        inspection.setInspectorName(request.getInspectorName());
-        inspection.setNotes(request.getNotes());
-
-        // 3. Link it to the transformer
-        inspection.setTransformer(transformer);
-
-        // 4. Save into DB
-        return inspectionRepo.save(inspection);
+    // Create a new Inspection
+    Inspection inspection = new Inspection();
+    inspection.setBranch(request.getBranch());
+    inspection.setTransformerNo(request.getTransformerNo());
+    inspection.setDate(request.getDate());
+    inspection.setTime(request.getTime());
+    inspection.setStatus(request.getStatus());
+    inspection.setMaintainanceDate(request.getMaintainanceDate());
+    // Save into DB
+    return inspectionRepo.save(inspection);
     }
+    
 
     @GetMapping("/inspections")
     public List<Inspection> getInspections() {
