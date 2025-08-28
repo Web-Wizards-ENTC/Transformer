@@ -17,6 +17,7 @@ public class InspectionImage {
     private String fileName;
     private String filePath;
     private String contentType;
+    private String weather;
 
     // Getters & Setters
     public Long getId() { return id; }
@@ -33,4 +34,7 @@ public class InspectionImage {
 
     public Inspection getInspection() { return inspection; }
     public void setInspection(Inspection inspection) { this.inspection = inspection; }
+
+    public String getWeather() { return weather; }
+    public void setWeather(String weather) { this.weather = weather; }
 }

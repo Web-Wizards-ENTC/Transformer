@@ -31,8 +31,9 @@ export default function ThermalImageUpload({ inspection }) {
 
 		// Build FormData
 		const formData = new FormData();
-		formData.append("inspectionId", inspection.id);   // 👈 must exist in DB
+		formData.append("inspectionId", inspection.id);   
 		formData.append("file", file);
+		formData.append("weather", weather); 
 
 		try {
 			const response = await axios.post("http://localhost:8080/api/images", formData, {

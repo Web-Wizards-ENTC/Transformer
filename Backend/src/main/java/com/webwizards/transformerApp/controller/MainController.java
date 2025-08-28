@@ -86,7 +86,8 @@ public class MainController {
     @PostMapping("/images")
     public InspectionImage uploadImage(
             @RequestParam("inspectionId") Long inspectionId,
-            @RequestParam("file") MultipartFile file) throws IOException {
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "weather", required = false) String weather) throws IOException {
                 
         Inspection inspection = inspectionRepo.findById(inspectionId)
                 .orElseThrow(() -> new RuntimeException("Inspection not found"));
@@ -106,6 +107,7 @@ public class MainController {
         image.setFilePath(filePath);
         image.setContentType(file.getContentType());
         image.setInspection(inspection);
+        image.setWeather(weather);
 
         return inspectionImageRepo.save(image);
     }
