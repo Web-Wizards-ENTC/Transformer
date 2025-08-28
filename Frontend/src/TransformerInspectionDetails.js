@@ -4,12 +4,15 @@ import { FaStar, FaRegStar, FaEye, FaTrash, FaEllipsisV, FaMapMarkerAlt } from '
 import inspectionsData from './inspections.json';
 import ThermalImageUpload from "./ThermalImageUpload";
 import transformerImagesJSON from "./TransformerImageList.json";
+import { getInspections } from './API';
 
 const statusColors = {
   'In Progress': 'bg-green-100 text-green-700',
   'Pending': 'bg-red-100 text-red-700',
   'Completed': 'bg-purple-100 text-purple-700',
 };
+
+
 
 export default function TransformerInspectionDetails({ transformer, onBack }) {
   const [showThermal, setShowThermal] = useState(false);
@@ -25,10 +28,27 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
   const baselineInputRef = useRef(null);
   const baselineUploadInterval = useRef(null);
 
-  // Use transformerNo for matching inspections
-  const [inspections, setInspections] = useState(
-    inspectionsData.filter(ins => ins.no === transformer.transformerNo)
-  );
+  const [inspections, setInspections] = useState([]);
+  const [loading, setLoading] = useState(true);
+  React.useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const data = await getInspections();  // calls backend /api/inspections
+        // Filter inspections belonging to this transformer
+        const filtered = data.filter(ins => ins.transformerNo === transformer.transformerNo);
+        setInspections(filtered);
+      } catch (err) {
+        console.error("Failed to fetch inspections", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchData();
+  }, [transformer.transformerNo]);
+  
+  
 
   const handleBaselineClick = () => baselineInputRef.current.click();
 
@@ -166,6 +186,32 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
               </tr>
             </thead>
             <tbody>
+
+            {inspections.map((insp, i) => (
+                <tr key={insp.id + '-' + i} className="border-b hover:bg-indigo-50">
+                  <td className="py-2 px-4 flex items-center gap-2">
+                    {i === 0 ? <FaStar className="text-indigo-600" /> : <FaRegStar className="text-gray-400" />}
+                    {String(insp.id).padStart(6, "0")}  {/* use id instead of inspectionNo */}
+                  </td>
+                  <td className="py-2 px-4">{insp.date} {insp.time}</td> {/* use date + time */}
+                  <td className="py-2 px-4">{insp.maintenanceDate}</td>   {/* not maintenance */}
+                  <td className="py-2 px-4">
+                    <span className={`px-3 py-1 rounded ${statusColors[insp.status]}`}>{insp.status}</span>
+                  </td>
+                  <td className="py-2 px-4 text-right">
+                    <button
+                      className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700"
+                      onClick={() => { setSelectedInspection(insp); setShowThermal(true); }}
+                    >
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))}
+
+
+
+{/* 
               {inspections.map((insp, i) => (
                 <tr key={insp.inspectionNo + i} className="border-b hover:bg-indigo-50">
                   <td className="py-2 px-4 flex items-center gap-2">
@@ -181,7 +227,10 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
                     <button className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700" onClick={() => { setSelectedInspection(insp); setShowThermal(true); }}>View</button>
                   </td>
                 </tr>
-              ))}
+              ))} */}
+
+
+              
             </tbody>
           </table>
         </div>

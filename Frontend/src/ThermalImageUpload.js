@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
+import axios from "axios";
 
 export default function ThermalImageUpload({ inspection }) {
 	const [uploading, setUploading] = useState(false);
@@ -20,29 +21,40 @@ export default function ThermalImageUpload({ inspection }) {
 		setBaselineDateTime(`${now.toLocaleDateString()} ${now.toLocaleTimeString()}`); // set baseline datetime
 	}, []);
 
-	const handleFileChange = (event) => {
+	const handleFileChange = async (event) => {
 		const file = event.target.files[0];
 		if (!file) return;
+
 		setUploading(true);
 		setProgress(0);
 		setThermalImage(file);
 
-		uploadInterval.current = setInterval(() => {
-			setProgress((prev) => {
-				if (prev >= 100) {
-					clearInterval(uploadInterval.current);
-					setUploading(false);
-					setShowComparison(true);
+		// Build FormData
+		const formData = new FormData();
+		formData.append("inspectionId", inspection.id);   // 👈 must exist in DB
+		formData.append("file", file);
 
-					// set current upload datetime
-					const now = new Date();
-					setCurrentDateTime(`${now.toLocaleDateString()} ${now.toLocaleTimeString()}`);
-
-					return 100;
-				}
-				return prev + 2;
+		try {
+			const response = await axios.post("http://localhost:8080/api/images", formData, {
+				headers: { "Content-Type": "multipart/form-data" },
+				onUploadProgress: (progressEvent) => {
+					const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+					setProgress(percentCompleted);
+				},
 			});
-		}, 50);
+
+			// If upload succeeded
+			console.log("Uploaded image:", response.data);
+			setUploading(false);
+			setShowComparison(true);
+
+			// Set current datetime
+			const now = new Date();
+			setCurrentDateTime(`${now.toLocaleDateString()} ${now.toLocaleTimeString()}`);
+		} catch (error) {
+			console.error("Upload failed:", error);
+			setUploading(false);
+		}
 	};
 
 	const handleCancelUpload = () => {
