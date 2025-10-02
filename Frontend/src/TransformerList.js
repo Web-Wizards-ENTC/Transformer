@@ -2,49 +2,50 @@ import React, { useState } from 'react';
 import AddTransformerModal from './AddTransformerModal';
 import './App.css';
 
-const transformerData = [
-  { no: 'AZ-8890', pole: 'EN-122-A', region: 'Nugegoda', type: 'Bulk' },
-  { no: 'AZ-1649', pole: 'EN-122-A', region: 'Nugegoda', type: 'Bulk' },
-  { no: 'AZ-7316', pole: 'EN-123-B', region: 'Nugegoda', type: 'Bulk' },
-  { no: 'AZ-4613', pole: 'EN-122-A', region: 'Nugegoda', type: 'Bulk' },
-  { no: 'AX-8993', pole: 'EN-123-A', region: 'Nugegoda', type: 'Distribution' },
-  { no: 'AY-8790', pole: 'EN-122-A', region: 'Nugegoda', type: 'Distribution' },
-  { no: 'AZ-4563', pole: 'EN-123-A', region: 'Maharagama', type: 'Bulk' },
-  { no: 'AZ-8523', pole: 'EN-123-A', region: 'Maharagama', type: 'Bulk' },
-  { no: 'AZ-8456', pole: 'EN-123-A', region: 'Maharagama', type: 'Bulk' },
-  { no: 'AZ-7896', pole: 'EN-123-A', region: 'Maharagama', type: 'Bulk' },
-  { no: 'AX-8990', pole: 'EN-123-A', region: 'Maharagama', type: 'Distribution' },
+// Load transformer data from JSON file
+import { getTransformers } from './API';
 
-  { no: 'AZ-9403', pole: 'EN-123-A', region: 'Maharagama', type: 'Distribution' },
 
-  { no: 'AY-7701', pole: 'EN-124-A', region: 'Nugegoda', type: 'Bulk' },
-  { no: 'AZ-9052', pole: 'EN-124-B', region: 'Nugegoda', type: 'Bulk' },
-  { no: 'AZ-9063', pole: 'EN-125-A', region: 'Maharagama', type: 'Distribution' },
-  { no: 'AX-6004', pole: 'EN-125-B', region: 'Maharagama', type: 'Bulk' },
-  { no: 'AY-8405', pole: 'EN-126-A', region: 'Nugegoda', type: 'Distribution' },
-  { no: 'AZ-9006', pole: 'EN-126-B', region: 'Maharagama', type: 'Bulk' },
-  { no: 'AX-7007', pole: 'EN-127-A', region: 'Nugegoda', type: 'Bulk' },
-  { no: 'AZ-9608', pole: 'EN-127-B', region: 'Maharagama', type: 'Distribution' },
-  { no: 'AY-8069', pole: 'EN-128-A', region: 'Nugegoda', type: 'Bulk' },
-];
 
-const regions = ['All Regions', ...Array.from(new Set(transformerData.map(t => t.region)))];
-const types = ['All Types', ...Array.from(new Set(transformerData.map(t => t.type)))];
 
 function TransformerList(props) {
   const [region, setRegion] = useState('All Regions');
   const [type, setType] = useState('All Types');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const [transformers, setTransformers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const pageSize = 10;
 
-  // Reset page to 1 when filters/search change
+  // Fetch transformer data from backend
+  const fetchTransformers = async () => {
+    setLoading(true);
+    try {
+      const data = await getTransformers();
+      setTransformers(data);
+    } catch (error) {
+      // Optionally handle error
+    } finally {
+      setLoading(false);
+    }
+  };
   React.useEffect(() => {
-    setPage(1);
-  }, [region, type, search]);
+    fetchTransformers();
+  }, []);
 
-  // Filtering logic
-  let filtered = transformerData;
+  const regions = ['All Regions', ...Array.from(new Set(transformers.map(t => t.region)))];
+  const types = ['All Types', ...Array.from(new Set(transformers.map(t => t.type)))];
+
+
+  // Sort by last added time (newest first)
+  let filtered = [...transformers];
+  filtered.sort((a, b) => {
+    // If createdAt exists, sort by it; otherwise, sort by array order
+    if (b.createdAt && a.createdAt) {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    }
+    return 0;
+  });
   if (region !== 'All Regions') {
     filtered = filtered.filter(t => t.region === region);
   }
@@ -62,10 +63,20 @@ function TransformerList(props) {
   const totalPages = Math.ceil(filtered.length / pageSize);
 
   const [modalOpen, setModalOpen] = useState(false);
+  // State to track which row's menu is open
+  const [menuOpenIndex, setMenuOpenIndex] = useState(null);
+  // State for delete confirmation modal
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
+  // Reset page to 1 when filters/search change
+  React.useEffect(() => {
+    setPage(1);
+  }, [region, type, search]);
 
   return (
     <div className="p-8 font-sans bg-gray-50 min-h-screen">
-      <AddTransformerModal open={modalOpen} setOpen={setModalOpen} />
+      <AddTransformerModal open={modalOpen} setOpen={setModalOpen} onAdded={fetchTransformers} />
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Transformers</h1>
         <button
@@ -105,51 +116,106 @@ function TransformerList(props) {
           </button>
         </div>
       </div>
-      <table className="w-full bg-white rounded shadow">
-        <thead>
-          <tr className="bg-indigo-100 text-indigo-700">
-            <th className="py-2 px-4 text-left">Transformer No.</th>
-            <th className="py-2 px-4 text-left">Pole No.</th>
-            <th className="py-2 px-4 text-left">Region</th>
-            <th className="py-2 px-4 text-left">Type</th>
-            <th className="py-2 px-4"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {paginated.map((t, i) => (
-            <tr key={t.no} className="border-b hover:bg-indigo-50">
-              <td className="py-2 px-4">{t.no}</td>
-              <td className="py-2 px-4">{t.pole}</td>
-              <td className="py-2 px-4">{t.region}</td>
-              <td className="py-2 px-4">{t.type}</td>
-              <td className="py-2 px-4 text-right">
-                <button 
-                  className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700"
-
-                  onClick={() => {
-                    props.setSelectedTransformer(t); // Pass the row transformer
-                    props.setPage('inspectionDetails'); // Go to details page
-                  }}
-
-                >
-                  View
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <div className="flex justify-center mt-6 gap-2">
-        {Array.from({ length: totalPages }, (_, i) => (
+      {loading ? (
+        <div className="text-center py-8 text-gray-500">Loading transformers...</div>
+      ) : (
+        <>
+          <table className="w-full bg-white rounded shadow">
+            <thead>
+              <tr className="bg-indigo-100 text-indigo-700">
+                <th className="py-2 px-4 text-left">Transformer No.</th>
+                <th className="py-2 px-4 text-left">Pole No.</th>
+                <th className="py-2 px-4 text-left">Region</th>
+                <th className="py-2 px-4 text-left">Type</th>
+                <th className="py-2 px-4"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginated.map((t, i) => (
+                <tr key={t.no} className="border-b hover:bg-indigo-50 relative">
+                  <td className="py-2 px-4">{t.transformerNo}</td>
+                  <td className="py-2 px-4">{t.poleNo}</td>
+                  <td className="py-2 px-4">{t.region}</td>
+                  <td className="py-2 px-4">{t.type}</td>
+                  <td className="py-2 px-4 text-right flex items-center justify-end gap-2">
+                    <button 
+                      className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700"
+                      onClick={() => {
+                        props.setSelectedTransformer(t);
+                        props.setPage('inspectionDetails');
+                      }}
+                    >
+                      View
+                    </button>
+                    <div className="relative">
+                      <button
+                        className="px-2 py-1 text-xl hover:bg-gray-200 rounded"
+                        onClick={() => setMenuOpenIndex(menuOpenIndex === i ? null : i)}
+                        aria-label="Options"
+                      >
+                        &#8942;
+                      </button>
+                      {menuOpenIndex === i && (
+                        <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-10">
+                          <button
+                            className="block w-full text-left px-4 py-2 hover:bg-indigo-50"
+                            onClick={() => {
+                              setMenuOpenIndex(null);
+                              // TODO: Implement edit logic
+                              alert('Edit clicked for ' + t.transformerNo);
+                            }}
+                          >Edit</button>
+                          <button
+                            className="block w-full text-left px-4 py-2 hover:bg-red-50 text-red-600"
+                            onClick={() => {
+                              setMenuOpenIndex(null);
+                              setDeleteTarget(t);
+                              setDeleteModalOpen(true);
+                            }}
+                          >Delete</button>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="flex justify-center mt-6 gap-2">
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                className={`px-3 py-1 rounded ${page === i + 1 ? 'bg-indigo-600 text-white' : 'bg-indigo-100 text-indigo-700'}`}
+                onClick={() => setPage(i + 1)}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+  {/* Delete Confirmation Modal */}
+  {deleteModalOpen && (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+      <div className="bg-white p-6 rounded shadow w-80">
+        <h2 className="text-lg font-bold mb-4">Delete Transformer</h2>
+        <p className="mb-4">Are you sure you want to delete transformer <span className="font-semibold">{deleteTarget?.transformerNo}</span>?</p>
+        <div className="flex justify-end gap-2">
           <button
-            key={i + 1}
-            className={`px-3 py-1 rounded ${page === i + 1 ? 'bg-indigo-600 text-white' : 'bg-indigo-100 text-indigo-700'}`}
-            onClick={() => setPage(i + 1)}
-          >
-            {i + 1}
-          </button>
-        ))}
+            className="px-4 py-2 bg-gray-200 rounded"
+            onClick={() => setDeleteModalOpen(false)}
+          >Cancel</button>
+          <button
+            className="px-4 py-2 bg-red-600 text-white rounded"
+            onClick={() => {
+              setDeleteModalOpen(false);
+              // Here you would call the API to delete, but as requested, no API call
+            }}
+          >Yes</button>
+        </div>
       </div>
+    </div>
+  )}
     </div>
   );
 }

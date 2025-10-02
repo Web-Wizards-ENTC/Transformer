@@ -1,6 +1,7 @@
 import React, { useState } from "react";
+import { addInspection } from "./API";
 
-export default function AddInspectionModal({ open, setOpen }) {
+export default function AddInspectionModal({ open, setOpen, onAdded }) {
   const [form, setForm] = useState({
     branch: "",
     transformerNo: "",
@@ -13,8 +14,18 @@ export default function AddInspectionModal({ open, setOpen }) {
   };
 
   const handleConfirm = () => {
-    console.log("Inspection submitted:", form);
-    setOpen(false);
+    async function submit() {
+      try {
+        await addInspection(form);
+        if (onAdded) onAdded(); // call refresh function
+      } catch (error) {
+        // Optionally show error message
+        console.error(error);
+      } finally {
+        setOpen(false);
+      }
+    }
+    submit();
   };
 
   return (
