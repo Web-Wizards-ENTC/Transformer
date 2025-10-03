@@ -162,32 +162,38 @@ export default function ThermalImageUpload({ inspection }) {
   };
 
   // 🔥 Legend Component (outside image)
-  const Legend = () => {
-    const minTemp = 20;
-    const maxTemp = 300;
-    const steps = 8;
-    const stepValue = (maxTemp - minTemp) / steps;
-    const labels = Array.from({ length: steps + 1 }, (_, i) => minTemp + i * stepValue);
+// 🔥 Legend Component (outside image)
+	const Legend = () => {
+	const minTemp = 20;
+	const maxTemp = 300;
+	const steps = 8;
+	const stepValue = (maxTemp - minTemp) / steps;
 
-    return (
-      <div className="flex flex-row items-center ml-2">
-        <div
-          className="w-4 h-72 rounded"
-          style={{
-            background: "linear-gradient(to top, blue, cyan, green, yellow, orange, red)",
-            border: "1px solid #555",
-          }}
-        />
-        <div className="flex flex-col justify-between h-72 ml-2 text-xs font-semibold text-gray-700">
-          {labels.map((t, i) => (
-            <div key={i} className="flex items-center" style={{ height: "12.5%" }}>
-              <span>{Math.round(t)}°C</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  };
+	// Generate labels, then reverse them so 20°C is bottom, 300°C is top
+	const labels = Array.from({ length: steps + 1 }, (_, i) => minTemp + i * stepValue).reverse();
+
+	return (
+		<div className="flex flex-row items-center ml-2">
+		{/* Gradient bar */}
+		<div
+			className="w-4 h-72 rounded"
+			style={{
+			background: "linear-gradient(to top, blue, cyan, green, yellow, orange, red)",
+			border: "1px solid #555",
+			}}
+		/>
+		{/* Labels aligned with gradient */}
+		<div className="flex flex-col justify-between h-72 ml-2 text-xs font-semibold text-gray-700">
+			{labels.map((t, i) => (
+			<div key={i} className="flex items-center" style={{ height: "12.5%" }}>
+				<span>{Math.round(t)}°C</span>
+			</div>
+			))}
+		</div>
+		</div>
+	);
+	};
+
 
   return (
     <>
