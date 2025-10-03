@@ -4,20 +4,26 @@
     "name": "AI",
     "position": [120, 250],
     "type": 1,
-    "dateTime": "2025-10-02 21:15:00"
+    "dateTime": "2025-10-02 21:15:00",
+    "anomalySize": 2,
+    "SeverityScore": 5
   },
   {
     "id": "Error 2",
     "name": "John Doe",
     "position": [300, 180],
     "type": 3,
-    "dateTime": "2025-10-02 21:20:00"
+    "dateTime": "2025-10-02 21:20:00",
+    "anomalySize": 1,
+    "SeverityScore": 3
   },
   {
     "id": "Error 3",
     "name": "AI",
     "position": [100, 250],
     "type": 5,
-    "dateTime": "2025-10-02 21:25:00"
+    "dateTime": "2025-10-02 21:25:00",
+    "anomalySize": 3,
+    "SeverityScore": 1
   }
 ]
