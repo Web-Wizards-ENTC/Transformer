@@ -71,7 +71,16 @@
     		<groupId>org.postgresql</groupId>
     		<artifactId>postgresql</artifactId>
     		<scope>runtime</scope>
-		</dependency>	
+		</dependency>
+		<!-- JSON processing -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
