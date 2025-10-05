@@ -431,6 +431,8 @@ export default function ThermalAnalysis() {
     rule2: false,
     rule3: false
   });
+  const [currentNote, setCurrentNote] = useState('');
+  const [savedNotes, setSavedNotes] = useState([]);
   
   const baselineInputRef = useRef(null);
   const candidateInputRef = useRef(null);
@@ -493,8 +495,21 @@ export default function ThermalAnalysis() {
     setResults(null);
     setError(null);
     setTool(null);
+    setCurrentNote('');
+    setSavedNotes([]);
     if (baselineInputRef.current) baselineInputRef.current.value = '';
     if (candidateInputRef.current) candidateInputRef.current.value = '';
+  };
+
+  const handleConfirmNotes = () => {
+    if (currentNote.trim()) {
+      setSavedNotes([...savedNotes, currentNote.trim()]);
+      setCurrentNote('');
+    }
+  };
+
+  const handleCancelNotes = () => {
+    setCurrentNote('');
   };
 
   return (
@@ -697,6 +712,57 @@ export default function ThermalAnalysis() {
           results={results} 
           processingTime={results.processingTimeMs || 0} 
         />
+      )}
+
+      {/* Notes Section */}
+      {(baselineFile || candidateFile || results) && (
+        <div className="bg-white rounded-lg shadow-lg p-6 mt-6">
+          <h3 className="text-xl font-bold mb-4 text-gray-800">Notes</h3>
+          
+          {/* Display Saved Notes */}
+          {savedNotes.length > 0 && (
+            <div className="space-y-3 mb-4">
+              {savedNotes.map((note, index) => (
+                <div 
+                  key={index}
+                  className="bg-gray-50 px-4 py-3 rounded-lg border border-gray-200"
+                >
+                  <p className="text-gray-700">
+                    <span className="font-semibold text-gray-800">Note {index + 1}:</span>{' '}
+                    <span className="text-indigo-700">{note}</span>
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <textarea
+            value={currentNote}
+            onChange={(e) => setCurrentNote(e.target.value)}
+            placeholder="Type here to add notes..."
+            className="w-full h-32 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none text-gray-700"
+          />
+
+          <div className="flex gap-4 mt-4">
+            <button
+              onClick={handleConfirmNotes}
+              disabled={!currentNote.trim()}
+              className={`px-8 py-2.5 rounded-lg transition-colors font-medium ${
+                currentNote.trim()
+                  ? 'bg-indigo-600 text-white hover:bg-indigo-700'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              Confirm
+            </button>
+            <button
+              onClick={handleCancelNotes}
+              className="px-8 py-2.5 text-gray-600 hover:text-gray-800 transition-colors font-medium"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
