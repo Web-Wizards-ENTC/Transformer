@@ -34,9 +34,7 @@ const AnalysisResults = ({ results, processingTime }) => {
         <div className="mt-6">
           <div className="flex justify-between items-center mb-3">
             <h4 className="text-lg font-semibold text-gray-800">Detected Anomalies</h4>
-            <p className="text-sm text-gray-500">
-              {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}
-            </p>
+            
           </div>
           <div className="space-y-2">
             {results.boxInfo.map((box, index) => {
@@ -90,6 +88,14 @@ const AnalysisResults = ({ results, processingTime }) => {
                     <div>
                       <p className="text-sm text-gray-600">Coverage</p>
                       <p className="text-lg font-semibold text-gray-800">{(box.areaFrac * 100).toFixed(1)}%</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Detected</p>
+                      <p className="text-lg font-semibold text-gray-800">
+                        {new Date().toLocaleDateString('en-GB')} 
+                        {' '}
+                        {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
                     </div>
                   </div>
                 </div>
