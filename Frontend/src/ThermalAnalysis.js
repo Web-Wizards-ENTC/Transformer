@@ -120,119 +120,127 @@ const AnalysisResults = ({ results, processingTime }) => {
 
 // Component for displaying thermal images with bounding boxes
 const ThermalImageDisplay = ({ imageUrl, title, boxes = [], imageWidth, imageHeight, className = "" }) => {
-  const [imageState, setImageState] = useState({
-    zoom: 1,
-    offset: { x: 0, y: 0 },
-    dragging: false,
-    startPos: { x: 0, y: 0 }
-  });
+  const [zoom, setZoom] = useState(1);
+  const [displaySize, setDisplaySize] = useState({ width: 0, height: 0 });
+  const containerRef = useRef(null);
+  const imgRef = useRef(null);
 
   const getFaultColor = (index) => {
     const colors = ['#DC2626', '#F97316', '#FACC15', '#10B981', '#3B82F6'];
     return colors[index % colors.length];
   };
 
-  const handleImageClick = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-
-    setImageState(prev => {
-      const newZoom = prev.zoom >= 3 ? 1 : prev.zoom + 0.5;
-      const scale = newZoom / prev.zoom;
-      const newOffset = {
-        x: prev.offset.x - x * (scale - 1),
-        y: prev.offset.y - y * (scale - 1),
-      };
-      return { ...prev, zoom: newZoom, offset: newOffset };
-    });
+  // Get actual displayed image size after load
+  const handleImageLoad = () => {
+    if (imgRef.current) {
+      const rect = imgRef.current.getBoundingClientRect();
+      setDisplaySize({ 
+        width: rect.width, 
+        height: rect.height 
+      });
+    }
   };
 
-  const handleMouseDown = (e) => {
-    setImageState(prev => ({
-      ...prev,
-      dragging: true,
-      startPos: { x: e.clientX - prev.offset.x, y: e.clientY - prev.offset.y }
-    }));
+  const handleZoomIn = () => {
+    setZoom(prev => Math.min(prev + 0.5, 3));
   };
 
-  const handleMouseMove = (e) => {
-    setImageState(prev => {
-      if (!prev.dragging) return prev;
-      return {
-        ...prev,
-        offset: { x: e.clientX - prev.startPos.x, y: e.clientY - prev.startPos.y }
-      };
-    });
+  const handleZoomOut = () => {
+    setZoom(prev => Math.max(prev - 0.5, 1));
   };
 
-  const handleMouseUp = () => {
-    setImageState(prev => ({ ...prev, dragging: false }));
+  const handleReset = () => {
+    setZoom(1);
   };
 
-  const getImageStyle = () => {
-    const { zoom, offset, dragging } = imageState;
-    return {
-      transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
-      transformOrigin: "center",
-      transition: dragging ? "none" : "transform 0.2s ease",
-      cursor: "pointer"
-    };
-  };
+  // Calculate scale factors from ML image dimensions to displayed dimensions
+  const scaleX = imageWidth && displaySize.width ? displaySize.width / imageWidth : 0;
+  const scaleY = imageHeight && displaySize.height ? displaySize.height / imageHeight : 0;
 
   return (
     <div className={`relative ${className}`}>
       <h4 className="text-lg font-semibold mb-2 text-gray-800">{title}</h4>
-      <div className="relative w-full h-80 bg-gray-100 rounded-lg overflow-hidden">
-        <img
-          src={imageUrl}
-          alt={title}
-          className="w-full h-full object-cover"
-          style={getImageStyle()}
-          onClick={handleImageClick}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-        />
-        
-        {/* Bounding boxes */}
-        {boxes && boxes.map((box, index) => {
-          const { zoom, offset } = imageState;
-          const [x, y, w, h] = box;
+      <div 
+        ref={containerRef}
+        className="relative w-full h-80 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center"
+      >
+        <div 
+          style={{ 
+            transform: `scale(${zoom})`,
+            transformOrigin: 'center',
+            transition: 'transform 0.2s ease',
+            position: 'relative',
+            display: 'inline-block'
+          }}
+        >
+          <img
+            ref={imgRef}
+            src={imageUrl}
+            alt={title}
+            className="max-w-full max-h-80 object-contain"
+            onLoad={handleImageLoad}
+            style={{ display: 'block' }}
+          />
           
-          // Calculate box position and size based on zoom and offset
-          const boxStyle = {
-            position: 'absolute',
-            left: `${x * zoom + offset.x}px`,
-            top: `${y * zoom + offset.y}px`,
-            width: `${w * zoom}px`,
-            height: `${h * zoom}px`,
-            border: `2px solid ${getFaultColor(index)}`,
-            backgroundColor: `${getFaultColor(index)}20`,
-            pointerEvents: 'none'
-          };
+          {/* Bounding boxes overlay - positioned relative to image */}
+          {boxes && boxes.length > 0 && scaleX > 0 && scaleY > 0 && boxes.map((box, index) => {
+            const [x, y, w, h] = box;
+            
+            // Convert ML coordinates to displayed image coordinates
+            const boxLeft = x * scaleX;
+            const boxTop = y * scaleY;
+            const boxWidth = w * scaleX;
+            const boxHeight = h * scaleY;
+            
+            const boxStyle = {
+              position: 'absolute',
+              left: `${boxLeft}px`,
+              top: `${boxTop}px`,
+              width: `${boxWidth}px`,
+              height: `${boxHeight}px`,
+              border: `2px solid ${getFaultColor(index)}`,
+              backgroundColor: `${getFaultColor(index)}20`,
+              pointerEvents: 'none',
+              boxSizing: 'border-box'
+            };
 
-          return (
-            <div key={index} style={boxStyle}>
-              <div 
-                className="absolute -top-6 -left-1 bg-white px-2 py-1 rounded text-xs font-bold shadow"
-                style={{ color: getFaultColor(index) }}
-              >
-                {index + 1}
+            return (
+              <div key={index} style={boxStyle}>
+                <div 
+                  className="absolute -top-6 -left-1 bg-white px-2 py-1 rounded text-xs font-bold shadow"
+                  style={{ color: getFaultColor(index) }}
+                >
+                  {index + 1}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
       
-      {/* Reset button */}
-      <button
-        onClick={() => setImageState({ zoom: 1, offset: { x: 0, y: 0 }, dragging: false, startPos: { x: 0, y: 0 } })}
-        className="absolute top-8 right-2 bg-white px-3 py-1 rounded shadow text-sm font-medium hover:bg-gray-50"
-      >
-        Reset View
-      </button>
+      {/* Zoom controls */}
+      <div className="absolute top-8 right-2 flex flex-col space-y-1">
+        <button
+          onClick={handleZoomIn}
+          disabled={zoom >= 3}
+          className="bg-white px-3 py-1 rounded shadow text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+        >
+          +
+        </button>
+        <button
+          onClick={handleZoomOut}
+          disabled={zoom <= 1}
+          className="bg-white px-3 py-1 rounded shadow text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+        >
+          −
+        </button>
+        <button
+          onClick={handleReset}
+          className="bg-white px-3 py-1 rounded shadow text-sm font-medium hover:bg-gray-50"
+        >
+          Reset
+        </button>
+      </div>
     </div>
   );
 };
