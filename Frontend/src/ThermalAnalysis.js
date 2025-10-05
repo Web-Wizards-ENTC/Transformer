@@ -81,20 +81,29 @@ const AnalysisResults = ({ results, processingTime }) => {
       {/* Detected Anomalies */}
       {results.boxInfo && results.boxInfo.length > 0 && (
         <div className="mt-6">
-          <h4 className="text-lg font-semibold mb-3 text-gray-800">Detected Anomalies</h4>
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="text-lg font-semibold text-gray-800">Detected Anomalies</h4>
+            <p className="text-sm text-gray-500">
+              {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}
+            </p>
+          </div>
           <div className="space-y-2">
             {results.boxInfo.map((box, index) => (
               <div key={index} className="bg-gray-50 p-3 rounded-lg flex justify-between items-center">
                 <div className="flex items-center space-x-3">
                   <div 
-                    className="w-4 h-4 rounded"
-                    style={{ backgroundColor: getFaultColor(box.boxFault) }}
-                  ></div>
+                    className="flex items-center justify-center rounded-full text-white font-bold text-sm"
+                    style={{ 
+                      backgroundColor: getFaultColor(box.boxFault),
+                      width: '28px',
+                      height: '28px',
+                      minWidth: '28px'
+                    }}
+                  >
+                    {index + 1}
+                  </div>
                   <div>
                     <p className="font-medium text-gray-800">{box.label || box.boxFault}</p>
-                    <p className="text-sm text-gray-600">
-                      Position: ({box.x}, {box.y}) | Size: {box.w}×{box.h}
-                    </p>
                   </div>
                 </div>
                 <div className="text-right">
