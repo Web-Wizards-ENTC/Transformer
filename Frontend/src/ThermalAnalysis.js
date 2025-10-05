@@ -28,56 +28,7 @@ const AnalysisResults = ({ results, processingTime }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 mt-6">
-      <h3 className="text-xl font-bold mb-4 text-gray-800">Analysis Results</h3>
       
-      {/* Overall Results */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <p className="text-sm text-gray-600">Fault Type</p>
-          <p className="text-lg font-semibold" style={{ color: getFaultColor(results.faultType) }}>
-            {results.faultType || 'None'}
-          </p>
-        </div>
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <p className="text-sm text-gray-600">Confidence</p>
-          <p className="text-lg font-semibold text-gray-800">
-            {Math.round((results.confidence || 0) * 100)}%
-          </p>
-        </div>
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <p className="text-sm text-gray-600">Severity</p>
-          <span className={`px-2 py-1 rounded text-sm font-semibold ${getSeverityColor(results.confidence || 0)}`}>
-            {getSeverityLevel(results.confidence || 0)}
-          </span>
-        </div>
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <p className="text-sm text-gray-600">Processing Time</p>
-          <p className="text-lg font-semibold text-gray-800">{processingTime}ms</p>
-        </div>
-      </div>
-
-      {/* Detailed Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <p className="text-sm text-blue-600">Histogram Distance</p>
-          <p className="text-lg font-semibold text-blue-800">
-            {results.histDistance?.toFixed(3) || 'N/A'}
-          </p>
-        </div>
-        <div className="bg-green-50 p-4 rounded-lg">
-          <p className="text-sm text-green-600">Brightness Change (DV95)</p>
-          <p className="text-lg font-semibold text-green-800">
-            {results.dv95?.toFixed(3) || 'N/A'}
-          </p>
-        </div>
-        <div className="bg-purple-50 p-4 rounded-lg">
-          <p className="text-sm text-purple-600">Warm Fraction</p>
-          <p className="text-lg font-semibold text-purple-800">
-            {((results.warmFraction || 0) * 100).toFixed(1)}%
-          </p>
-        </div>
-      </div>
-
       {/* Detected Anomalies */}
       {results.boxInfo && results.boxInfo.length > 0 && (
         <div className="mt-6">
