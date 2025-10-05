@@ -1,14 +1,202 @@
-"""
-Rule-based thermal comparison script.
-Input: baseline.png candidate.png
-Output: JSON to stdout with keys: prob, histDistance, dv95, warmFraction, boxes, annotated
-- annotated is a data URL (image/png)
-"""
 import sys
 import json
 import base64
 import io
-from PIL import Image, ImageDraw
+import os
+from typing import Tuple, List, Dict
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
+import numpy as np
+from collections import deque
+
+# =============================================================================
+# SEGMENTATION MODULE 
+# =============================================================================
+
+def load_image(path: str) -> Image.Image:
+    return Image.open(path).convert('RGB')
+
+def image_to_features(img: Image.Image) -> np.ndarray:
+    W, H = img.size
+    arr = np.array(img, dtype=np.float32)  # H x W x 3
+    R = arr[:,:,0]
+    G = arr[:,:,1]
+    B = arr[:,:,2]
+    I = (0.299*R + 0.587*G + 0.114*B)
+    # coordinate features normalized 0..1
+    xs = np.tile(np.linspace(0,1,W, dtype=np.float32), (H,1))
+    ys = np.tile(np.linspace(0,1,H, dtype=np.float32)[:,None], (1,W))
+    # stack features (H, W, F)
+    feats = np.stack([R, G, B, I, xs*255.0, ys*255.0], axis=-1)  # scale coords similar range
+    flat = feats.reshape(-1, feats.shape[-1])
+    # standardize features (z-score)
+    mean = flat.mean(axis=0, keepdims=True)
+    std = flat.std(axis=0, keepdims=True) + 1e-6
+    flat = (flat - mean)/std
+    return flat
+
+def kmeans(data: np.ndarray, k: int, iterations: int = 15, seed: int = 42) -> Tuple[np.ndarray, np.ndarray]:
+    """Return (centroids, labels)"""
+    n, f = data.shape
+    rnd = np.random.RandomState(seed)
+    # init: pick k random points
+    idx = rnd.choice(n, k, replace=False)
+    centroids = data[idx].copy()
+    labels = np.zeros(n, dtype=np.int32)
+    for it in range(iterations):
+        # assign
+        dists = np.zeros((n, k), dtype=np.float32)
+        for ci in range(k):
+            diff = data - centroids[ci]
+            dists[:,ci] = np.sum(diff*diff, axis=1)
+        new_labels = np.argmin(dists, axis=1)
+        if it > 0 and np.all(new_labels == labels):
+            break  # converged
+        labels = new_labels
+        # update
+        for ci in range(k):
+            mask = labels == ci
+            if np.any(mask):
+                centroids[ci] = data[mask].mean(axis=0)
+            else:
+                # re-init empty centroid
+                centroids[ci] = data[rnd.choice(n)]
+    return centroids, labels
+
+def local_mean(gray: np.ndarray, k: int = 7) -> np.ndarray:
+    pad = k//2
+    padded = np.pad(gray, pad, mode='reflect')
+    out = np.zeros_like(gray)
+    for y in range(gray.shape[0]):
+        for x in range(gray.shape[1]):
+            out[y,x] = padded[y:y+k, x:x+k].mean()
+    return out
+
+def score_clusters(labels: np.ndarray, img: Image.Image, k: int) -> Dict:
+    W, H = img.size
+    arr = np.array(img, dtype=np.float32)
+    gray = (0.299*arr[:,:,0] + 0.587*arr[:,:,1] + 0.114*arr[:,:,2]) / 255.0
+
+    # local contrast
+    try:
+        mean_local = local_mean(gray, 7)
+    except Exception:
+        mean_local = local_mean(gray, 7)
+    contrast = np.abs(gray - mean_local)
+
+    total_pixels = W*H
+    cluster_info = []
+    for ci in range(k):
+        mask_flat = (labels == ci)
+        count = int(mask_flat.sum())
+        area_frac = count / total_pixels
+        if count == 0:
+            cluster_info.append({
+                'cluster': ci,
+                'areaFrac': 0.0,
+                'contrastMean': 0.0,
+                'compactness': 0.0,
+                'score': -1e9,
+            })
+            continue
+        # bounding box
+        ys, xs = np.nonzero(mask_flat.reshape(H, W))
+        minx, maxx = int(xs.min()), int(xs.max())
+        miny, maxy = int(ys.min()), int(ys.max())
+        bbox_area = (maxx-minx+1)*(maxy-miny+1)
+        compactness = count / (bbox_area + 1e-6)
+        contrast_mean = float(contrast.reshape(-1)[mask_flat].mean())
+        cluster_info.append({
+            'cluster': ci,
+            'areaFrac': float(area_frac),
+            'contrastMean': contrast_mean,
+            'compactness': float(compactness),
+            'bbox': [minx, miny, maxx, maxy]
+        })
+
+    # normalize metrics (z-like) for scoring
+    def z(vals):
+        v = np.array(vals, dtype=np.float32)
+        if len(v) == 0:
+            return v
+        m = v.mean(); s = v.std() + 1e-6
+        return (v - m)/s
+
+    contrast_z = z([c['contrastMean'] for c in cluster_info])
+    compact_z = z([c['compactness'] for c in cluster_info])
+    area_deviation = [1 - abs(0.25 - c['areaFrac']) for c in cluster_info]
+
+    min_area_frac = 0.02
+    max_area_frac = 0.75
+
+    best_idx = -1
+    best_score = -1e9
+    for i, info in enumerate(cluster_info):
+        if info['areaFrac'] < min_area_frac or info['areaFrac'] > max_area_frac:
+            score = -1e9
+        else:
+            score = float(contrast_z[i] + compact_z[i] + area_deviation[i])
+        info['score'] = score
+        if score > best_score:
+            best_score = score
+            best_idx = i
+
+    return {
+        'clusters': cluster_info,
+        'bestClusterIdx': best_idx,
+        'width': W,
+        'height': H
+    }
+
+def segment_and_reconstruct(path: str, k: int = 4, iterations: int = 12, seed: int = 42) -> Image.Image:
+    """Return a reconstructed color Image (transformer region only) without saving intermediates.
+    Falls back to original image if segmentation fails.
+    """
+    img = load_image(path)
+    W, H = img.size
+    feats = image_to_features(img)
+    try:
+        _, labels = kmeans(feats, k=k, iterations=iterations, seed=seed)
+    except Exception:
+        return img
+    labels_img = labels.reshape(H, W)
+    meta = score_clusters(labels, img, k)
+    best_idx = meta['bestClusterIdx']
+    if best_idx < 0:
+        return img
+    best_mask_bool = (labels_img == best_idx).astype(np.uint8)
+    # Simple refinement: remove tiny comps
+    visited = np.zeros_like(best_mask_bool, dtype=bool)
+    refined = np.zeros_like(best_mask_bool, dtype=np.uint8)
+    min_area = int(0.002 * W * H)
+    dirs = [(1,0),(-1,0),(0,1),(0,-1)]
+    for y in range(H):
+        for x in range(W):
+            if best_mask_bool[y, x] == 0 or visited[y, x]:
+                continue
+            q = deque([(x, y)])
+            visited[y, x] = True
+            pixels = []
+            while q:
+                px, py = q.popleft()
+                pixels.append((px, py))
+                for dx, dy in dirs:
+                    nx, ny = px + dx, py + dy
+                    if nx < 0 or ny < 0 or nx >= W or ny >= H:
+                        continue
+                    if not visited[ny, nx] and best_mask_bool[ny, nx] == 1:
+                        visited[ny, nx] = True
+                        q.append((nx, ny))
+            if len(pixels) >= min_area:
+                for (px, py) in pixels:
+                    refined[py, px] = 1
+    arr = np.array(img)
+    recon = np.zeros_like(arr)
+    recon[refined == 1] = arr[refined == 1]
+    return Image.fromarray(recon)
+
+# =============================================================================
+# THERMAL ANALYSIS MODULE 
+# =============================================================================
 
 def rgb_to_hsv(r, g, b):
     r_, g_, b_ = r/255.0, g/255.0, b/255.0
@@ -26,7 +214,6 @@ def rgb_to_hsv(r, g, b):
     s = 0.0 if mx == 0 else diff / mx
     v = mx
     return h/360.0, s, v
-
 
 def analyze_pair(base_img: Image.Image, cand_img: Image.Image):
     W, H = cand_img.size
@@ -99,7 +286,6 @@ def analyze_pair(base_img: Image.Image, cand_img: Image.Image):
     boxes = []
     min_area = max(32, int(W*H*0.001))
 
-    from collections import deque
     for y in range(H):
         for x in range(W):
             if not mask[y][x] or visited[y][x]:
@@ -126,12 +312,10 @@ def analyze_pair(base_img: Image.Image, cand_img: Image.Image):
             if area >= min_area:
                 boxes.append([minX, minY, maxX-minX+1, maxY-minY+1])
 
-    # First, classify potential faults BEFORE filtering (per user request order)
-    # This gives us an overall faultType derived from the raw candidate boxes.
+    # Classify potential faults
     def classify_fault(img_w, img_h, boxes_list):
         if not boxes_list:
             return "none", []
-        # Define middle area as central third of the image
         center_x0, center_y0 = int(img_w * 0.33), int(img_h * 0.33)
         center_x1, center_y1 = int(img_w * 0.67), int(img_h * 0.67)
         total_area = float(img_w * img_h)
@@ -148,19 +332,16 @@ def analyze_pair(base_img: Image.Image, cand_img: Image.Image):
             long_side = float(max(w, h))
             aspect = long_side / short_side
 
-            # central overlap check
             bx0, by0, bx1, by1 = x, y, x + w, y + h
             ox0, oy0 = max(bx0, center_x0), max(by0, center_y0)
             ox1, oy1 = min(bx1, center_x1), min(by1, center_y1)
             overlap = max(0, ox1 - ox0) * max(0, oy1 - oy0)
             overlap_frac = (overlap / area) if area > 0 else 0.0
 
-            # Track maxima and shapes
             max_area_frac = max(max_area_frac, area_frac)
             if aspect >= 2.0:
                 has_rectangular = True
 
-            # Per-box label for annotation
             if area_frac >= 0.10:
                 box_label = 'Loose joint'
             elif aspect >= 2.0:
@@ -168,7 +349,6 @@ def analyze_pair(base_img: Image.Image, cand_img: Image.Image):
             else:
                 box_label = 'Point overload'
 
-            # Large central if box covers >=30% and overlaps center meaningfully
             if area_frac >= 0.30 and overlap_frac >= 0.4:
                 has_large_central = True
 
@@ -178,7 +358,6 @@ def analyze_pair(base_img: Image.Image, cand_img: Image.Image):
                 'overlapCenterFrac': float(overlap_frac), 'label': box_label
             })
 
-        # Decide fault in specified order
         if has_large_central:
             return "loose joint", info
         if max_area_frac < 0.30:
@@ -187,10 +366,9 @@ def analyze_pair(base_img: Image.Image, cand_img: Image.Image):
             return "wire overload", info
         return "none", info
 
-    # Classify on raw boxes first
     fault_type_raw, _ = classify_fault(W, H, boxes)
 
-    # Filter nested boxes if 80% of a box area overlaps another (remove the inner)
+    # Filter nested boxes
     def overlap_area(a, b):
         ax, ay, aw, ah = a
         bx, by, bw, bh = b
@@ -211,7 +389,6 @@ def analyze_pair(base_img: Image.Image, cand_img: Image.Image):
                 continue
             inter = overlap_area(boxes[i], boxes[j])
             if areas[i] > 0 and inter / areas[i] >= 0.8:
-                # i is 80% inside j
                 keep[i] = False
                 break
     filtered = [b for b, k in zip(boxes, keep) if k]
@@ -220,24 +397,20 @@ def analyze_pair(base_img: Image.Image, cand_img: Image.Image):
     score = (hist_dist/0.5) + dv95 + (warm_frac*2.0)
     prob = 1.0 / (1.0 + pow(2.718281828, -score))
 
-    # Now label each remaining (filtered) box and return their info
     _, box_info = classify_fault(W, H, filtered)
     fault_type = fault_type_raw
 
-    # Provide UI with geometry and labels; frontend will draw overlays
-    # Map each box to a high-level fault type for filtering in UI
     enriched = []
     for bi in box_info:
         area_frac = bi['areaFrac']
         aspect = bi['aspect']
         overlap_center = bi['overlapCenterFrac']
         
-        # This logic seems more aligned with user intent.
         if area_frac >= 0.10 and (overlap_center >= 0.4 or area_frac >= 0.30):
             box_fault = 'loose joint'
         elif aspect >= 2.0:
             box_fault = 'wire overload'
-        else: # Default to point overload for other warm regions
+        else:
             box_fault = 'point overload'
         bi2 = dict(bi)
         bi2['boxFault'] = box_fault
@@ -253,27 +426,116 @@ def analyze_pair(base_img: Image.Image, cand_img: Image.Image):
         'boxes': filtered,
         'boxInfo': enriched,
         'faultType': fault_type,
-        # annotated is now empty; UI will render overlays
         'annotated': '',
     }
 
+def draw_bounding_boxes(image, box_info):
+    """Draw bounding boxes with labels on the image"""
+    img_copy = image.copy()
+    draw = ImageDraw.Draw(img_copy)
+    
+    colors = {
+        'loose joint': '#FF0000',
+        'wire overload': '#00FF00',
+        'point overload': '#0000FF',
+        'default': '#FFFF00'
+    }
+    
+    for box in box_info:
+        x, y, w, h = box['x'], box['y'], box['w'], box['h']
+        fault_type = box.get('boxFault', 'default')
+        color = colors.get(fault_type, colors['default'])
+        
+        draw.rectangle([x, y, x + w, y + h], outline=color, width=3)
+        
+        label = f"{fault_type} ({box['areaFrac']:.1%})"
+        
+        try:
+            font = ImageFont.load_default()
+        except:
+            font = None
+            
+        if font:
+            bbox = draw.textbbox((x, y-20), label, font=font)
+            draw.rectangle(bbox, fill=color)
+            draw.text((x, y-20), label, fill='white', font=font)
+        else:
+            draw.text((x, y-20), label, fill=color)
+    
+    return img_copy
+
+# =============================================================================
+# MAIN INTEGRATED FUNCTION
+# =============================================================================
 
 def main():
     if len(sys.argv) != 3:
-        print(json.dumps({'error': 'usage: analyze.py BASELINE CANDIDATE'}))
+        print(json.dumps({'error': 'usage: integrated_analyzer.py BASELINE CANDIDATE'}))
         sys.exit(2)
     base_path, cand_path = sys.argv[1], sys.argv[2]
+    
+    # Create result folder
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    result_dir = os.path.join(script_dir, 'result')
+    os.makedirs(result_dir, exist_ok=True)
+    
     try:
-        base_img = Image.open(base_path)
-        cand_img = Image.open(cand_path)
-        # Expect same size (backend resizes baseline to candidate size already)
-        res = analyze_pair(base_img, cand_img)
+        # Load originals
+        orig_base = Image.open(base_path).convert('RGB')
+        orig_cand = Image.open(cand_path).convert('RGB')
+
+        # Apply segmentation
+        seg_base = segment_and_reconstruct(base_path)
+        seg_cand = segment_and_reconstruct(cand_path)
+
+        # Ensure same size
+        if seg_base.size != seg_cand.size:
+            seg_base = seg_base.resize(seg_cand.size, Image.BILINEAR)
+
+        # Save segmented images
+        seg_base_name = os.path.splitext(os.path.basename(base_path))[0] + '_seg.png'
+        seg_cand_name = os.path.splitext(os.path.basename(cand_path))[0] + '_seg.png'
+        seg_base_path = os.path.join(result_dir, seg_base_name)
+        seg_cand_path = os.path.join(result_dir, seg_cand_name)
+        seg_base.save(seg_base_path)
+        seg_cand.save(seg_cand_path)
+
+        # Analyze
+        res = analyze_pair(seg_base, seg_cand)
+        res['segmentedBaseline'] = seg_base_path
+        res['segmentedCandidate'] = seg_cand_path
+
+        # Draw bounding boxes if any
+        if res['boxInfo']:
+            annotated_img = draw_bounding_boxes(seg_cand, res['boxInfo'])
+            base_name_root = os.path.splitext(os.path.basename(base_path))[0]
+            cand_name_root = os.path.splitext(os.path.basename(cand_path))[0]
+            output_filename = f"{base_name_root}_vs_{cand_name_root}_result.jpg"
+            output_path = os.path.join(result_dir, output_filename)
+            annotated_img.save(output_path, 'JPEG')
+            res['saved_image'] = output_path
+            res['num_boxes'] = len(res['boxInfo'])
+        else:
+            res['saved_image'] = None
+            res['num_boxes'] = 0
+
+        # Output the result
         print(json.dumps(res, separators=(',', ':')))
+        
+        # Cleanup: Delete intermediate segmented images after generating output
+        try:
+            if os.path.exists(seg_base_path):
+                os.remove(seg_base_path)
+            if os.path.exists(seg_cand_path):
+                os.remove(seg_cand_path)
+        except Exception as cleanup_error:
+            # Don't fail the entire process if cleanup fails
+            pass
+        
         sys.exit(0)
     except Exception as e:
         print(json.dumps({'error': str(e)}))
         sys.exit(1)
-
 
 if __name__ == '__main__':
     main()
