@@ -30,79 +30,114 @@ const AnalysisResults = ({ results, processingTime }) => {
     <div className="bg-white rounded-lg shadow-lg p-6 mt-6">
       <h3 className="text-xl font-bold mb-4 text-gray-800">Analysis Results</h3>
       
-      {/* Overall Results */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <p className="text-sm text-gray-600">Fault Type</p>
-          <p className="text-lg font-semibold" style={{ color: getFaultColor(results.faultType) }}>
-            {results.faultType || 'None'}
-          </p>
+      {/* No Anomalies Detected - Normal Status */}
+      {results.success && (!results.boxInfo || results.boxInfo.length === 0) && (
+        <div className="bg-green-50 border-l-4 border-green-500 p-6 rounded-lg">
+          <div className="flex items-center space-x-4">
+            <div 
+              className="flex items-center justify-center rounded-full text-white font-bold"
+              style={{ 
+                backgroundColor: '#10B981',
+                width: '48px',
+                height: '48px'
+              }}
+            >
+              ✓
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-green-800">Normal</p>
+              <p className="text-green-700 mt-1">No thermal anomalies detected. Transformer is operating normally.</p>
+            </div>
+          </div>
+          <div className="mt-4 flex items-center space-x-8 ml-16">
+            <div>
+              <p className="text-sm text-green-600">Status</p>
+              <p className="text-lg font-semibold text-green-800">Normal Operation</p>
+            </div>
+            <div>
+              <p className="text-sm text-green-600">Detected</p>
+              <p className="text-lg font-semibold text-green-800">
+                {new Date().toLocaleDateString('en-GB')} 
+                {' '}
+                {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            </div>
+          </div>
         </div>
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <p className="text-sm text-gray-600">Confidence</p>
-          <p className="text-lg font-semibold text-gray-800">
-            {Math.round((results.confidence || 0) * 100)}%
-          </p>
-        </div>
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <p className="text-sm text-gray-600">Severity</p>
-          <span className={`px-2 py-1 rounded text-sm font-semibold ${getSeverityColor(results.confidence || 0)}`}>
-            {getSeverityLevel(results.confidence || 0)}
-          </span>
-        </div>
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <p className="text-sm text-gray-600">Processing Time</p>
-          <p className="text-lg font-semibold text-gray-800">{processingTime}ms</p>
-        </div>
-      </div>
-
-      {/* Detailed Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <p className="text-sm text-blue-600">Histogram Distance</p>
-          <p className="text-lg font-semibold text-blue-800">
-            {results.histDistance?.toFixed(3) || 'N/A'}
-          </p>
-        </div>
-        <div className="bg-green-50 p-4 rounded-lg">
-          <p className="text-sm text-green-600">Brightness Change (DV95)</p>
-          <p className="text-lg font-semibold text-green-800">
-            {results.dv95?.toFixed(3) || 'N/A'}
-          </p>
-        </div>
-        <div className="bg-purple-50 p-4 rounded-lg">
-          <p className="text-sm text-purple-600">Warm Fraction</p>
-          <p className="text-lg font-semibold text-purple-800">
-            {((results.warmFraction || 0) * 100).toFixed(1)}%
-          </p>
-        </div>
-      </div>
-
+      )}
+      
       {/* Detected Anomalies */}
       {results.boxInfo && results.boxInfo.length > 0 && (
         <div className="mt-6">
-          <h4 className="text-lg font-semibold mb-3 text-gray-800">Detected Anomalies</h4>
+          <div className="flex justify-between items-center mb-3">
+            <h4 className="text-lg font-semibold text-gray-800">Detected Anomalies</h4>
+            
+          </div>
           <div className="space-y-2">
-            {results.boxInfo.map((box, index) => (
-              <div key={index} className="bg-gray-50 p-3 rounded-lg flex justify-between items-center">
-                <div className="flex items-center space-x-3">
-                  <div 
-                    className="w-4 h-4 rounded"
-                    style={{ backgroundColor: getFaultColor(box.boxFault) }}
-                  ></div>
-                  <div>
-                    <p className="font-medium text-gray-800">{box.label || box.boxFault}</p>
-                    <p className="text-sm text-gray-600">
-                      Position: ({box.x}, {box.y}) | Size: {box.w}×{box.h}
-                    </p>
+            {results.boxInfo.map((box, index) => {
+              // Calculate confidence for this specific anomaly (using area fraction as a proxy)
+              const anomalyConfidence = box.areaFrac > 0.05 ? 0.75 : box.areaFrac > 0.02 ? 0.65 : 0.55;
+              const confidencePercent = Math.round(anomalyConfidence * 100);
+              
+              // Determine severity based on area coverage
+              const severity = box.areaFrac > 0.05 ? 'HIGH' : box.areaFrac > 0.02 ? 'MEDIUM' : 'LOW';
+              
+              // Color scheme based on severity - used for both badge and bounding box
+              const boxColor = severity === 'HIGH' ? '#DC2626' :    // Red for high
+                              severity === 'MEDIUM' ? '#F97316' :   // Orange for medium
+                              '#FACC15';                            // Yellow for low
+              
+              const severityColor = severity === 'HIGH' ? 'text-red-600 bg-red-100' :
+                                   severity === 'MEDIUM' ? 'text-orange-600 bg-orange-100' :
+                                   'text-yellow-600 bg-yellow-100';
+              
+              return (
+                <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center space-x-3">
+                      <div 
+                        className="flex items-center justify-center rounded-full text-white font-bold text-sm"
+                        style={{ 
+                          backgroundColor: boxColor,
+                          width: '28px',
+                          height: '28px',
+                          minWidth: '28px'
+                        }}
+                      >
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800">{box.label || box.boxFault}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-8 ml-10">
+                    <div>
+                      <p className="text-sm text-gray-600">Confidence</p>
+                      <p className="text-lg font-semibold text-gray-800">{confidencePercent}%</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Severity</p>
+                      <span className={`px-2 py-1 rounded text-sm font-semibold ${severityColor}`}>
+                        {severity}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Coverage</p>
+                      <p className="text-lg font-semibold text-gray-800">{(box.areaFrac * 100).toFixed(1)}%</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Detected</p>
+                      <p className="text-lg font-semibold text-gray-800">
+                        {new Date().toLocaleDateString('en-GB')} 
+                        {' '}
+                        {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">Coverage</p>
-                  <p className="font-semibold">{(box.areaFrac * 100).toFixed(1)}%</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -119,120 +154,142 @@ const AnalysisResults = ({ results, processingTime }) => {
 };
 
 // Component for displaying thermal images with bounding boxes
-const ThermalImageDisplay = ({ imageUrl, title, boxes = [], imageWidth, imageHeight, className = "" }) => {
-  const [imageState, setImageState] = useState({
-    zoom: 1,
-    offset: { x: 0, y: 0 },
-    dragging: false,
-    startPos: { x: 0, y: 0 }
-  });
+const ThermalImageDisplay = ({ imageUrl, title, boxes = [], boxInfo = [], imageWidth, imageHeight, className = "" }) => {
+  const [zoom, setZoom] = useState(1);
+  const [displaySize, setDisplaySize] = useState({ width: 0, height: 0 });
+  const containerRef = useRef(null);
+  const imgRef = useRef(null);
 
-  const getFaultColor = (index) => {
+  const getFaultColor = (index, boxInfo) => {
+    // Determine severity based on area coverage from boxInfo
+    if (boxInfo && boxInfo[index]) {
+      const areaFrac = boxInfo[index].areaFrac;
+      const severity = areaFrac > 0.05 ? 'HIGH' : areaFrac > 0.02 ? 'MEDIUM' : 'LOW';
+      
+      // Return color based on severity
+      return severity === 'HIGH' ? '#DC2626' :    // Red for high
+             severity === 'MEDIUM' ? '#F97316' :  // Orange for medium
+             '#FACC15';                            // Yellow for low
+    }
+    
+    // Fallback to cycling colors if boxInfo not available
     const colors = ['#DC2626', '#F97316', '#FACC15', '#10B981', '#3B82F6'];
     return colors[index % colors.length];
   };
 
-  const handleImageClick = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-
-    setImageState(prev => {
-      const newZoom = prev.zoom >= 3 ? 1 : prev.zoom + 0.5;
-      const scale = newZoom / prev.zoom;
-      const newOffset = {
-        x: prev.offset.x - x * (scale - 1),
-        y: prev.offset.y - y * (scale - 1),
-      };
-      return { ...prev, zoom: newZoom, offset: newOffset };
-    });
+  // Get actual displayed image size after load
+  const handleImageLoad = () => {
+    if (imgRef.current) {
+      const rect = imgRef.current.getBoundingClientRect();
+      setDisplaySize({ 
+        width: rect.width, 
+        height: rect.height 
+      });
+    }
   };
 
-  const handleMouseDown = (e) => {
-    setImageState(prev => ({
-      ...prev,
-      dragging: true,
-      startPos: { x: e.clientX - prev.offset.x, y: e.clientY - prev.offset.y }
-    }));
+  const handleZoomIn = () => {
+    setZoom(prev => Math.min(prev + 0.5, 3));
   };
 
-  const handleMouseMove = (e) => {
-    setImageState(prev => {
-      if (!prev.dragging) return prev;
-      return {
-        ...prev,
-        offset: { x: e.clientX - prev.startPos.x, y: e.clientY - prev.startPos.y }
-      };
-    });
+  const handleZoomOut = () => {
+    setZoom(prev => Math.max(prev - 0.5, 1));
   };
 
-  const handleMouseUp = () => {
-    setImageState(prev => ({ ...prev, dragging: false }));
+  const handleReset = () => {
+    setZoom(1);
   };
 
-  const getImageStyle = () => {
-    const { zoom, offset, dragging } = imageState;
-    return {
-      transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
-      transformOrigin: "center",
-      transition: dragging ? "none" : "transform 0.2s ease",
-      cursor: "pointer"
-    };
-  };
+  // Calculate scale factors from ML image dimensions to displayed dimensions
+  const scaleX = imageWidth && displaySize.width ? displaySize.width / imageWidth : 0;
+  const scaleY = imageHeight && displaySize.height ? displaySize.height / imageHeight : 0;
 
   return (
     <div className={`relative ${className}`}>
       <h4 className="text-lg font-semibold mb-2 text-gray-800">{title}</h4>
-      <div className="relative w-full h-80 bg-gray-100 rounded-lg overflow-hidden">
-        <img
-          src={imageUrl}
-          alt={title}
-          className="w-full h-full object-cover"
-          style={getImageStyle()}
-          onClick={handleImageClick}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-        />
-        
-        {/* Bounding boxes */}
-        {boxes && boxes.map((box, index) => {
-          const { zoom, offset } = imageState;
-          const [x, y, w, h] = box;
+      <div 
+        ref={containerRef}
+        className="relative w-full h-80 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center"
+      >
+        <div 
+          style={{ 
+            transform: `scale(${zoom})`,
+            transformOrigin: 'center',
+            transition: 'transform 0.2s ease',
+            position: 'relative',
+            display: 'inline-block'
+          }}
+        >
+          <img
+            ref={imgRef}
+            src={imageUrl}
+            alt={title}
+            className="max-w-full max-h-80 object-contain"
+            onLoad={handleImageLoad}
+            style={{ display: 'block' }}
+          />
           
-          // Calculate box position and size based on zoom and offset
-          const boxStyle = {
-            position: 'absolute',
-            left: `${x * zoom + offset.x}px`,
-            top: `${y * zoom + offset.y}px`,
-            width: `${w * zoom}px`,
-            height: `${h * zoom}px`,
-            border: `2px solid ${getFaultColor(index)}`,
-            backgroundColor: `${getFaultColor(index)}20`,
-            pointerEvents: 'none'
-          };
+          {/* Bounding boxes overlay - positioned relative to image */}
+          {boxes && boxes.length > 0 && scaleX > 0 && scaleY > 0 && boxes.map((box, index) => {
+            const [x, y, w, h] = box;
+            
+            // Convert ML coordinates to displayed image coordinates
+            const boxLeft = x * scaleX;
+            const boxTop = y * scaleY;
+            const boxWidth = w * scaleX;
+            const boxHeight = h * scaleY;
+            
+            const color = getFaultColor(index, boxInfo);
+            
+            const boxStyle = {
+              position: 'absolute',
+              left: `${boxLeft}px`,
+              top: `${boxTop}px`,
+              width: `${boxWidth}px`,
+              height: `${boxHeight}px`,
+              border: `2px solid ${color}`,
+              backgroundColor: `${color}20`,
+              pointerEvents: 'none',
+              boxSizing: 'border-box'
+            };
 
-          return (
-            <div key={index} style={boxStyle}>
-              <div 
-                className="absolute -top-6 -left-1 bg-white px-2 py-1 rounded text-xs font-bold shadow"
-                style={{ color: getFaultColor(index) }}
-              >
-                {index + 1}
+            return (
+              <div key={index} style={boxStyle}>
+                <div 
+                  className="absolute -top-6 -left-1 bg-white px-2 py-1 rounded text-xs font-bold shadow"
+                  style={{ color: color }}
+                >
+                  {index + 1}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
       
-      {/* Reset button */}
-      <button
-        onClick={() => setImageState({ zoom: 1, offset: { x: 0, y: 0 }, dragging: false, startPos: { x: 0, y: 0 } })}
-        className="absolute top-8 right-2 bg-white px-3 py-1 rounded shadow text-sm font-medium hover:bg-gray-50"
-      >
-        Reset View
-      </button>
+      {/* Zoom controls */}
+      <div className="absolute top-8 right-2 flex flex-col space-y-1">
+        <button
+          onClick={handleZoomIn}
+          disabled={zoom >= 3}
+          className="bg-white px-3 py-1 rounded shadow text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+        >
+          +
+        </button>
+        <button
+          onClick={handleZoomOut}
+          disabled={zoom <= 1}
+          className="bg-white px-3 py-1 rounded shadow text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+        >
+          −
+        </button>
+        <button
+          onClick={handleReset}
+          className="bg-white px-3 py-1 rounded shadow text-sm font-medium hover:bg-gray-50"
+        >
+          Reset
+        </button>
+      </div>
     </div>
   );
 };
@@ -387,6 +444,7 @@ export default function ThermalAnalysis() {
                 imageUrl={URL.createObjectURL(candidateFile)}
                 title="Candidate Image"
                 boxes={results?.boxes}
+                boxInfo={results?.boxInfo}
                 imageWidth={results?.imageWidth}
                 imageHeight={results?.imageHeight}
               />

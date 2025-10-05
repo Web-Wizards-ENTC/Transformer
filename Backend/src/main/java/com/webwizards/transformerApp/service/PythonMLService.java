@@ -59,11 +59,14 @@ public class PythonMLService {
             }
             
             // Build the Python command for thermal analysis
-            String pythonCommand = buildThermalAnalysisCommand(request);
-            
             // Execute the Python script
             ProcessBuilder processBuilder = new ProcessBuilder();
-            processBuilder.command(pythonCommand.split("\\s+"));
+            processBuilder.command(
+                "python",
+                PYTHON_SCRIPT_DIR + ANALYZE_SCRIPT,
+                request.getBaselineImagePath(),
+                request.getCandidateImagePath()
+            );
             processBuilder.directory(new File(System.getProperty("user.dir")));
             
             Process process = processBuilder.start();
