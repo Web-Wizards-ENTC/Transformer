@@ -28,6 +28,43 @@ const AnalysisResults = ({ results, processingTime }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-lg p-6 mt-6">
+      <h3 className="text-xl font-bold mb-4 text-gray-800">Analysis Results</h3>
+      
+      {/* No Anomalies Detected - Normal Status */}
+      {results.success && (!results.boxInfo || results.boxInfo.length === 0) && (
+        <div className="bg-green-50 border-l-4 border-green-500 p-6 rounded-lg">
+          <div className="flex items-center space-x-4">
+            <div 
+              className="flex items-center justify-center rounded-full text-white font-bold"
+              style={{ 
+                backgroundColor: '#10B981',
+                width: '48px',
+                height: '48px'
+              }}
+            >
+              ✓
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-green-800">Normal</p>
+              <p className="text-green-700 mt-1">No thermal anomalies detected. Transformer is operating normally.</p>
+            </div>
+          </div>
+          <div className="mt-4 flex items-center space-x-8 ml-16">
+            <div>
+              <p className="text-sm text-green-600">Status</p>
+              <p className="text-lg font-semibold text-green-800">Normal Operation</p>
+            </div>
+            <div>
+              <p className="text-sm text-green-600">Detected</p>
+              <p className="text-lg font-semibold text-green-800">
+                {new Date().toLocaleDateString('en-GB')} 
+                {' '}
+                {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Detected Anomalies */}
       {results.boxInfo && results.boxInfo.length > 0 && (
