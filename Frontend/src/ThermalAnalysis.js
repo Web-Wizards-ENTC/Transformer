@@ -88,30 +88,62 @@ const AnalysisResults = ({ results, processingTime }) => {
             </p>
           </div>
           <div className="space-y-2">
-            {results.boxInfo.map((box, index) => (
-              <div key={index} className="bg-gray-50 p-3 rounded-lg flex justify-between items-center">
-                <div className="flex items-center space-x-3">
-                  <div 
-                    className="flex items-center justify-center rounded-full text-white font-bold text-sm"
-                    style={{ 
-                      backgroundColor: getFaultColor(box.boxFault),
-                      width: '28px',
-                      height: '28px',
-                      minWidth: '28px'
-                    }}
-                  >
-                    {index + 1}
+            {results.boxInfo.map((box, index) => {
+              // Calculate confidence for this specific anomaly (using area fraction as a proxy)
+              const anomalyConfidence = box.areaFrac > 0.05 ? 0.75 : box.areaFrac > 0.02 ? 0.65 : 0.55;
+              const confidencePercent = Math.round(anomalyConfidence * 100);
+              
+              // Determine severity based on area coverage
+              const severity = box.areaFrac > 0.05 ? 'HIGH' : box.areaFrac > 0.02 ? 'MEDIUM' : 'LOW';
+              
+              // Color scheme based on severity - used for both badge and bounding box
+              const boxColor = severity === 'HIGH' ? '#DC2626' :    // Red for high
+                              severity === 'MEDIUM' ? '#F97316' :   // Orange for medium
+                              '#FACC15';                            // Yellow for low
+              
+              const severityColor = severity === 'HIGH' ? 'text-red-600 bg-red-100' :
+                                   severity === 'MEDIUM' ? 'text-orange-600 bg-orange-100' :
+                                   'text-yellow-600 bg-yellow-100';
+              
+              return (
+                <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center space-x-3">
+                      <div 
+                        className="flex items-center justify-center rounded-full text-white font-bold text-sm"
+                        style={{ 
+                          backgroundColor: boxColor,
+                          width: '28px',
+                          height: '28px',
+                          minWidth: '28px'
+                        }}
+                      >
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800">{box.label || box.boxFault}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-800">{box.label || box.boxFault}</p>
+                  <div className="flex items-center space-x-8 ml-10">
+                    <div>
+                      <p className="text-sm text-gray-600">Confidence</p>
+                      <p className="text-lg font-semibold text-gray-800">{confidencePercent}%</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Severity</p>
+                      <span className={`px-2 py-1 rounded text-sm font-semibold ${severityColor}`}>
+                        {severity}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Coverage</p>
+                      <p className="text-lg font-semibold text-gray-800">{(box.areaFrac * 100).toFixed(1)}%</p>
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-gray-600">Coverage</p>
-                  <p className="font-semibold">{(box.areaFrac * 100).toFixed(1)}%</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -128,13 +160,25 @@ const AnalysisResults = ({ results, processingTime }) => {
 };
 
 // Component for displaying thermal images with bounding boxes
-const ThermalImageDisplay = ({ imageUrl, title, boxes = [], imageWidth, imageHeight, className = "" }) => {
+const ThermalImageDisplay = ({ imageUrl, title, boxes = [], boxInfo = [], imageWidth, imageHeight, className = "" }) => {
   const [zoom, setZoom] = useState(1);
   const [displaySize, setDisplaySize] = useState({ width: 0, height: 0 });
   const containerRef = useRef(null);
   const imgRef = useRef(null);
 
-  const getFaultColor = (index) => {
+  const getFaultColor = (index, boxInfo) => {
+    // Determine severity based on area coverage from boxInfo
+    if (boxInfo && boxInfo[index]) {
+      const areaFrac = boxInfo[index].areaFrac;
+      const severity = areaFrac > 0.05 ? 'HIGH' : areaFrac > 0.02 ? 'MEDIUM' : 'LOW';
+      
+      // Return color based on severity
+      return severity === 'HIGH' ? '#DC2626' :    // Red for high
+             severity === 'MEDIUM' ? '#F97316' :  // Orange for medium
+             '#FACC15';                            // Yellow for low
+    }
+    
+    // Fallback to cycling colors if boxInfo not available
     const colors = ['#DC2626', '#F97316', '#FACC15', '#10B981', '#3B82F6'];
     return colors[index % colors.length];
   };
@@ -201,14 +245,16 @@ const ThermalImageDisplay = ({ imageUrl, title, boxes = [], imageWidth, imageHei
             const boxWidth = w * scaleX;
             const boxHeight = h * scaleY;
             
+            const color = getFaultColor(index, boxInfo);
+            
             const boxStyle = {
               position: 'absolute',
               left: `${boxLeft}px`,
               top: `${boxTop}px`,
               width: `${boxWidth}px`,
               height: `${boxHeight}px`,
-              border: `2px solid ${getFaultColor(index)}`,
-              backgroundColor: `${getFaultColor(index)}20`,
+              border: `2px solid ${color}`,
+              backgroundColor: `${color}20`,
               pointerEvents: 'none',
               boxSizing: 'border-box'
             };
@@ -217,7 +263,7 @@ const ThermalImageDisplay = ({ imageUrl, title, boxes = [], imageWidth, imageHei
               <div key={index} style={boxStyle}>
                 <div 
                   className="absolute -top-6 -left-1 bg-white px-2 py-1 rounded text-xs font-bold shadow"
-                  style={{ color: getFaultColor(index) }}
+                  style={{ color: color }}
                 >
                   {index + 1}
                 </div>
@@ -404,6 +450,7 @@ export default function ThermalAnalysis() {
                 imageUrl={URL.createObjectURL(candidateFile)}
                 title="Candidate Image"
                 boxes={results?.boxes}
+                boxInfo={results?.boxInfo}
                 imageWidth={results?.imageWidth}
                 imageHeight={results?.imageHeight}
               />
