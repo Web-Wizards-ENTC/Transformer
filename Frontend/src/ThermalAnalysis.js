@@ -319,6 +319,101 @@ const ThermalImageDisplay = ({ imageUrl, title, boxes = [], boxInfo = [], imageW
   );
 };
 
+// Error Ruleset Modal Component
+const ErrorRulesetModal = ({ isOpen, onClose, ruleset, setRuleset }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-bold text-gray-800">Error Ruleset</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 text-2xl"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="space-y-6">
+          {/* Temperature Difference */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Temperature Difference
+            </label>
+            <p className="text-xs text-gray-500 mb-3">
+              Temperature difference between baseline and maintenance images.
+            </p>
+            <select
+              value={ruleset.tempDifference}
+              onChange={(e) => setRuleset({ ...ruleset, tempDifference: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="10">10%</option>
+              <option value="20">20%</option>
+              <option value="30">30%</option>
+              <option value="40">40%</option>
+              <option value="50">50%</option>
+              <option value="60">60%</option>
+              <option value="70">70%</option>
+              <option value="80">80%</option>
+              <option value="90">90%</option>
+            </select>
+          </div>
+
+          {/* Rule 2 */}
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Hotspot Pattern Detection
+              </label>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={ruleset.rule2}
+                  onChange={(e) => setRuleset({ ...ruleset, rule2: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
+            <p className="text-xs text-gray-500">Detect localized high-temperature zones that indicate potential winding or bushing failures.</p>
+          </div>
+
+          {/* Rule 3 */}
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Cooling System Anomaly
+              </label>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={ruleset.rule3}
+                  onChange={(e) => setRuleset({ ...ruleset, rule3: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
+            <p className="text-xs text-gray-500">Identify abnormal temperature distribution caused by cooling fan or oil circulation issues.</p>
+          </div>
+        </div>
+
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            Apply
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Main Thermal Analysis Component
 export default function ThermalAnalysis() {
   const [baselineFile, setBaselineFile] = useState(null);
@@ -330,6 +425,12 @@ export default function ThermalAnalysis() {
   const [baselineImageControls, setBaselineImageControls] = useState(null);
   const [candidateImageControls, setCandidateImageControls] = useState(null);
   const [resetFunctions, setResetFunctions] = useState({ baseline: null, candidate: null });
+  const [showRulesetModal, setShowRulesetModal] = useState(false);
+  const [ruleset, setRuleset] = useState({
+    tempDifference: '10',
+    rule2: false,
+    rule3: false
+  });
   
   const baselineInputRef = useRef(null);
   const candidateInputRef = useRef(null);
@@ -562,6 +663,13 @@ export default function ThermalAnalysis() {
                 � Reset View
               </button>
 
+              <button
+                className="flex items-center gap-2 px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 w-full"
+                onClick={() => setShowRulesetModal(true)}
+              >
+                ⚙️ Error Ruleset
+              </button>
+
               <div className="border-t pt-4 mt-2 w-full">
                 <button
                   className="flex items-center gap-2 px-3 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 w-full"
@@ -574,6 +682,14 @@ export default function ThermalAnalysis() {
           </div>
         </div>
       )}
+
+      {/* Error Ruleset Modal */}
+      <ErrorRulesetModal 
+        isOpen={showRulesetModal}
+        onClose={() => setShowRulesetModal(false)}
+        ruleset={ruleset}
+        setRuleset={setRuleset}
+      />
 
       {/* Results Section */}
       {results && (
