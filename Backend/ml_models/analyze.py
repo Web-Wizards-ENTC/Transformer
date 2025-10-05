@@ -522,12 +522,15 @@ def main():
         # Output the result
         print(json.dumps(res, separators=(',', ':')))
         
-        # Cleanup: Delete intermediate segmented images after generating output
+        # Cleanup: Delete all intermediate images after generating output
         try:
             if os.path.exists(seg_base_path):
                 os.remove(seg_base_path)
             if os.path.exists(seg_cand_path):
                 os.remove(seg_cand_path)
+            # Also delete the final annotated result image
+            if res.get('saved_image') and os.path.exists(res['saved_image']):
+                os.remove(res['saved_image'])
         except Exception as cleanup_error:
             # Don't fail the entire process if cleanup fails
             pass
