@@ -8,7 +8,7 @@ const AnalysisResults = ({ results, processingTime }) => {
   const getFaultColor = (faultType) => {
     switch (faultType?.toLowerCase()) {
       case 'loose joint': return '#DC2626'; // Red
-      case 'wire overload': return '#F97316'; // Orange  
+      case 'wire overload': return '#F97316'; // Orange
       case 'point overload': return '#FACC15'; // Yellow
       default: return '#10B981'; // Green for normal
     }
@@ -154,11 +154,30 @@ const AnalysisResults = ({ results, processingTime }) => {
 };
 
 // Component for displaying thermal images with bounding boxes
-const ThermalImageDisplay = ({ imageUrl, title, boxes = [], boxInfo = [], imageWidth, imageHeight, className = "" }) => {
+const ThermalImageDisplay = ({ imageUrl, title, boxes = [], boxInfo = [], imageWidth, imageHeight, tool, onZoomChange, onResetView, className = "" }) => {
   const [zoom, setZoom] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [displaySize, setDisplaySize] = useState({ width: 0, height: 0 });
   const containerRef = useRef(null);
   const imgRef = useRef(null);
+
+  // Expose zoom and reset to parent
+  React.useEffect(() => {
+    if (onZoomChange) {
+      onZoomChange({ zoom, setZoom, offset, setOffset });
+    }
+  }, [zoom, offset, onZoomChange]);
+
+  React.useEffect(() => {
+    if (onResetView) {
+      onResetView(() => {
+        setZoom(1);
+        setOffset({ x: 0, y: 0 });
+      });
+    }
+  }, [onResetView]);
 
   const getFaultColor = (index, boxInfo) => {
     // Determine severity based on area coverage from boxInfo
@@ -188,16 +207,40 @@ const ThermalImageDisplay = ({ imageUrl, title, boxes = [], boxInfo = [], imageW
     }
   };
 
-  const handleZoomIn = () => {
-    setZoom(prev => Math.min(prev + 0.5, 3));
+  const handleImageClick = (e) => {
+    if (tool !== 'zoom') return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+
+    const newZoom = zoom >= 3 ? 1 : zoom + 0.5;
+    const scale = newZoom / zoom;
+    const newOffset = {
+      x: offset.x - x * (scale - 1),
+      y: offset.y - y * (scale - 1),
+    };
+    setZoom(newZoom);
+    setOffset(newOffset);
   };
 
-  const handleZoomOut = () => {
-    setZoom(prev => Math.max(prev - 0.5, 1));
+  const handleMouseDown = (e) => {
+    if (tool !== 'drag') return;
+    setDragging(true);
+    setStartPos({ x: e.clientX - offset.x, y: e.clientY - offset.y });
   };
 
-  const handleReset = () => {
+  const handleMouseMove = (e) => {
+    if (!dragging || tool !== 'drag') return;
+    setOffset({ x: e.clientX - startPos.x, y: e.clientY - startPos.y });
+  };
+
+  const handleMouseUp = () => {
+    setDragging(false);
+  };
+
+  const handleResetView = () => {
     setZoom(1);
+    setOffset({ x: 0, y: 0 });
   };
 
   // Calculate scale factors from ML image dimensions to displayed dimensions
@@ -210,12 +253,18 @@ const ThermalImageDisplay = ({ imageUrl, title, boxes = [], boxInfo = [], imageW
       <div 
         ref={containerRef}
         className="relative w-full h-80 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center"
+        onClick={handleImageClick}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        style={{ cursor: tool === 'drag' ? 'grab' : tool === 'zoom' ? 'zoom-in' : 'default' }}
       >
         <div 
           style={{ 
-            transform: `scale(${zoom})`,
+            transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
             transformOrigin: 'center',
-            transition: 'transform 0.2s ease',
+            transition: dragging ? 'none' : 'transform 0.2s ease',
             position: 'relative',
             display: 'inline-block'
           }}
@@ -266,30 +315,6 @@ const ThermalImageDisplay = ({ imageUrl, title, boxes = [], boxInfo = [], imageW
           })}
         </div>
       </div>
-      
-      {/* Zoom controls */}
-      <div className="absolute top-8 right-2 flex flex-col space-y-1">
-        <button
-          onClick={handleZoomIn}
-          disabled={zoom >= 3}
-          className="bg-white px-3 py-1 rounded shadow text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
-        >
-          +
-        </button>
-        <button
-          onClick={handleZoomOut}
-          disabled={zoom <= 1}
-          className="bg-white px-3 py-1 rounded shadow text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
-        >
-          −
-        </button>
-        <button
-          onClick={handleReset}
-          className="bg-white px-3 py-1 rounded shadow text-sm font-medium hover:bg-gray-50"
-        >
-          Reset
-        </button>
-      </div>
     </div>
   );
 };
@@ -301,13 +326,49 @@ export default function ThermalAnalysis() {
   const [analyzing, setAnalyzing] = useState(false);
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
+  const [tool, setTool] = useState(null);
+  const [baselineImageControls, setBaselineImageControls] = useState(null);
+  const [candidateImageControls, setCandidateImageControls] = useState(null);
+  const [resetFunctions, setResetFunctions] = useState({ baseline: null, candidate: null });
   
   const baselineInputRef = useRef(null);
   const candidateInputRef = useRef(null);
 
+  const handleZoomIn = () => {
+    if (baselineImageControls) {
+      const newZoom = Math.min(baselineImageControls.zoom + 0.5, 3);
+      baselineImageControls.setZoom(newZoom);
+    }
+    if (candidateImageControls) {
+      const newZoom = Math.min(candidateImageControls.zoom + 0.5, 3);
+      candidateImageControls.setZoom(newZoom);
+    }
+  };
+
+  const handleZoomOut = () => {
+    if (baselineImageControls) {
+      const newZoom = Math.max(baselineImageControls.zoom - 0.5, 1);
+      baselineImageControls.setZoom(newZoom);
+    }
+    if (candidateImageControls) {
+      const newZoom = Math.max(candidateImageControls.zoom - 0.5, 1);
+      candidateImageControls.setZoom(newZoom);
+    }
+  };
+
+  const handleResetView = () => {
+    if (resetFunctions.baseline) {
+      resetFunctions.baseline();
+    }
+    if (resetFunctions.candidate) {
+      resetFunctions.candidate();
+    }
+    setTool(null);
+  };
+
   const handleAnalyze = async () => {
     if (!baselineFile || !candidateFile) {
-      setError('Please select both baseline and candidate images');
+      setError('Please select both baseline and thermal images');
       return;
     }
 
@@ -325,11 +386,12 @@ export default function ThermalAnalysis() {
     }
   };
 
-  const handleReset = () => {
+  const handleStartOver = () => {
     setBaselineFile(null);
     setCandidateFile(null);
     setResults(null);
     setError(null);
+    setTool(null);
     if (baselineInputRef.current) baselineInputRef.current.value = '';
     if (candidateInputRef.current) candidateInputRef.current.value = '';
   };
@@ -373,7 +435,7 @@ export default function ThermalAnalysis() {
           {/* Candidate Image Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Candidate Image
+              Theramal Image
             </label>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
               <input
@@ -390,7 +452,7 @@ export default function ThermalAnalysis() {
                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                   <p className="mt-2 text-sm">
-                    {candidateFile ? candidateFile.name : 'Click to upload candidate image'}
+                    {candidateFile ? candidateFile.name : 'Click to upload thermal image'}
                   </p>
                 </div>
               </label>
@@ -413,10 +475,10 @@ export default function ThermalAnalysis() {
           </button>
           
           <button
-            onClick={handleReset}
+            onClick={handleStartOver}
             className="px-6 py-3 rounded-lg font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors"
           >
-            Reset
+            Start Over
           </button>
         </div>
 
@@ -432,23 +494,83 @@ export default function ThermalAnalysis() {
       {(baselineFile || candidateFile) && (
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <h3 className="text-lg font-semibold mb-4 text-gray-800">Image Preview</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {baselineFile && (
-              <ThermalImageDisplay
-                imageUrl={URL.createObjectURL(baselineFile)}
-                title="Baseline Image"
-              />
-            )}
-            {candidateFile && (
-              <ThermalImageDisplay
-                imageUrl={URL.createObjectURL(candidateFile)}
-                title="Candidate Image"
-                boxes={results?.boxes}
-                boxInfo={results?.boxInfo}
-                imageWidth={results?.imageWidth}
-                imageHeight={results?.imageHeight}
-              />
-            )}
+          <div className="flex flex-row gap-6">
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
+              {baselineFile && (
+                <ThermalImageDisplay
+                  imageUrl={URL.createObjectURL(baselineFile)}
+                  title="Baseline Image"
+                  tool={tool}
+                  onZoomChange={setBaselineImageControls}
+                  onResetView={(resetFn) => setResetFunctions(prev => ({ ...prev, baseline: resetFn }))}
+                />
+              )}
+              {candidateFile && (
+                <ThermalImageDisplay
+                  imageUrl={URL.createObjectURL(candidateFile)}
+                  title="Thermal Image"
+                  boxes={results?.boxes}
+                  boxInfo={results?.boxInfo}
+                  imageWidth={results?.imageWidth}
+                  imageHeight={results?.imageHeight}
+                  tool={tool}
+                  onZoomChange={setCandidateImageControls}
+                  onResetView={(resetFn) => setResetFunctions(prev => ({ ...prev, candidate: resetFn }))}
+                />
+              )}
+            </div>
+            
+            {/* Annotation Tools */}
+            <div className="w-48 flex flex-col gap-4 items-start border-l pl-4">
+              <h4 className="text-base font-semibold text-gray-700">
+                Annotation Tools
+              </h4>
+              
+              <button
+                className={`flex items-center gap-2 px-3 py-2 rounded w-full ${
+                  tool === 'drag'
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+                onClick={() => setTool('drag')}
+              >
+                ✋ Drag
+              </button>
+              
+              <div className="w-full">
+                <p className="text-xs text-gray-600 mb-1 font-medium">Zoom Controls</p>
+                <div className="flex gap-2">
+                  <button
+                    className="flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-gray-100 rounded hover:bg-gray-200"
+                    onClick={handleZoomIn}
+                  >
+                    🔍 +
+                  </button>
+                  <button
+                    className="flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-gray-100 rounded hover:bg-gray-200"
+                    onClick={handleZoomOut}
+                  >
+                    🔍 −
+                  </button>
+                </div>
+              </div>
+              
+              <button
+                className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 w-full"
+                onClick={handleResetView}
+              >
+                � Reset View
+              </button>
+
+              <div className="border-t pt-4 mt-2 w-full">
+                <button
+                  className="flex items-center gap-2 px-3 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 w-full"
+                  onClick={handleStartOver}
+                >
+                  🔄 Start Over
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
