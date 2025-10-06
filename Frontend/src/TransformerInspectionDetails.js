@@ -81,7 +81,7 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
         <div>
           <div className="flex items-center gap-3 mb-3">
             <div className="w-12 h-12 rounded bg-indigo-700 flex items-center justify-center text-white">
-              <div className="w-4 h-4 bg-white rounded"></div>
+              <div className="w-4 h-4 bg-white rounded"></div> 
             </div>
             <div>
               <div className="font-semibold text-lg">{transformer.transformerNo}</div>
