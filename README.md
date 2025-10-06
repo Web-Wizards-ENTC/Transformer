@@ -145,10 +145,10 @@ This project consists of two separate components: a backend server (**Spring Boo
 ![](Images/8.jpeg)
 4. Use **zoom, drag, reset** for image navigation.  
 5. Open **Error Ruleset** to configure thresholds.  
-![](Images/9.jpeg)
+![](Images/9.png)
 6. Review analysis results with metadata.  
 7. Add **notes** and save with **Confirm**.  
-![](Images/10.jpeg)
+![](Images/10.png)
 
 ---
 
