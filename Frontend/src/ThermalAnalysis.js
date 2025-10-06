@@ -551,7 +551,7 @@ export default function ThermalAnalysis() {
           {/* Candidate Image Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Theramal Image
+              Thermal Image
             </label>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
               <input
