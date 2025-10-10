@@ -80,11 +80,15 @@ export default function ThermalImageUpload({ inspection }) {
         const next = Math.min(prev + 2, 100);
         if (next >= 100) {
           clearInterval(uploadInterval.current);
-          setUploading(false);
-          setShowComparison(true);
 
-          // Start ML analysis after showing comparison
-          performThermalAnalysis();
+          // leave progress at 100 briefly so users can see the completed bar,
+          // then switch views and start analysis after a short pause (500ms)
+          setTimeout(() => {
+            setUploading(false);
+            setShowComparison(true);
+            // Start ML analysis after showing comparison
+            performThermalAnalysis();
+          }, 500);
         }
         return next;
       });
