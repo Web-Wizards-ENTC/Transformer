@@ -34,10 +34,6 @@ export default function ThermalImageUpload({ inspection }) {
   const thermalInputRef = useRef(null);
   const uploadInterval = useRef(null);
 
-  // Notes
-  const [notes, setNotes] = useState([]);
-  const [newNote, setNewNote] = useState("");
-  const [showPlaceholder, setShowPlaceholder] = useState(true);
 
   useEffect(() => {
     // Remove default baseline image setup since user will upload it
@@ -81,16 +77,16 @@ export default function ThermalImageUpload({ inspection }) {
     // Simulate upload progress
     uploadInterval.current = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 100) {
+        const next = Math.min(prev + 2, 100);
+        if (next >= 100) {
           clearInterval(uploadInterval.current);
           setUploading(false);
           setShowComparison(true);
-          
+
           // Start ML analysis after showing comparison
           performThermalAnalysis();
-          return 100;
         }
-        return prev + 3;
+        return next;
       });
     }, 100);
   };
@@ -215,19 +211,7 @@ export default function ThermalImageUpload({ inspection }) {
   };
 
   // Notes Handlers
-  const handleConfirmNote = () => {
-    if (!newNote.trim()) return;
-    const nextId = notes.length > 0 ? notes[notes.length - 1].id + 1 : 1;
-    const updatedNotes = [...notes, { id: nextId, text: newNote }];
-    setNotes(updatedNotes);
-    setNewNote("");
-    setShowPlaceholder(true);
-  };
-
-  const handleCancelNote = () => {
-    setNewNote("");
-    setShowPlaceholder(true);
-  };
+  // note handlers removed
 
   // 🔥 Legend Component (outside image)
 // 🔥 Legend Component (outside image)
