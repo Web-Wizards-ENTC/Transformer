@@ -415,7 +415,7 @@ const ErrorRulesetModal = ({ isOpen, onClose, ruleset, setRuleset }) => {
 };
 
 // Main Thermal Analysis Component
-export default function ThermalAnalysis() {
+export default function ThermalAnalysis({ initialBaselineFile = null, initialCandidateFile = null, autoStart = true }) {
   const [baselineFile, setBaselineFile] = useState(null);
   const [candidateFile, setCandidateFile] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -488,6 +488,32 @@ export default function ThermalAnalysis() {
       setAnalyzing(false);
     }
   };
+
+  // If component is mounted with initial files provided (from Transformer upload flow),
+  // populate state and optionally auto-start analysis to match the Transformer flow behavior.
+  React.useEffect(() => {
+    if (initialBaselineFile) setBaselineFile(initialBaselineFile);
+    if (initialCandidateFile) setCandidateFile(initialCandidateFile);
+
+    // Auto start analysis when both initial files are provided and autoStart is true
+    if (autoStart && initialBaselineFile && initialCandidateFile) {
+      // call handleAnalyze after state updates
+      (async () => {
+        setAnalyzing(true);
+        setError(null);
+        setResults(null);
+        try {
+          const analysisResults = await analyzeThermalImagesUpload(initialBaselineFile, initialCandidateFile);
+          setResults(analysisResults);
+        } catch (err) {
+          setError(`Analysis failed: ${err.message}`);
+        } finally {
+          setAnalyzing(false);
+        }
+      })();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialBaselineFile, initialCandidateFile]);
 
   const handleStartOver = () => {
     setBaselineFile(null);
