@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { analyzeThermalImagesUpload, uploadTransformerCurrent, uploadTransformerBase } from "./API";
-import notesData from "./notes.json"; // notes file
+// previous notes file removed to avoid showing preloaded notes
+import ThermalAnalysis from "./ThermalAnalysis";
 
 export default function ThermalImageUpload({ inspection }) {
   const [uploading, setUploading] = useState(false);
@@ -33,16 +34,11 @@ export default function ThermalImageUpload({ inspection }) {
   const thermalInputRef = useRef(null);
   const uploadInterval = useRef(null);
 
-  // Notes
-  const [notes, setNotes] = useState([]);
-  const [newNote, setNewNote] = useState("");
-  const [showPlaceholder, setShowPlaceholder] = useState(true);
 
   useEffect(() => {
     // Remove default baseline image setup since user will upload it
     const now = new Date();
     setBaselineDateTime(`${now.toLocaleDateString()} ${now.toLocaleTimeString()}`);
-    setNotes(notesData);
   }, []);
 
   const handleBaselineUpload = (event) => {
@@ -81,16 +77,20 @@ export default function ThermalImageUpload({ inspection }) {
     // Simulate upload progress
     uploadInterval.current = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 100) {
+        const next = Math.min(prev + 2, 100);
+        if (next >= 100) {
           clearInterval(uploadInterval.current);
-          setUploading(false);
-          setShowComparison(true);
-          
-          // Start ML analysis after showing comparison
-          performThermalAnalysis();
-          return 100;
+
+          // leave progress at 100 briefly so users can see the completed bar,
+          // then switch views and start analysis after a short pause (500ms)
+          setTimeout(() => {
+            setUploading(false);
+            setShowComparison(true);
+            // Start ML analysis after showing comparison
+            performThermalAnalysis();
+          }, 500);
         }
-        return prev + 3;
+        return next;
       });
     }, 100);
   };
@@ -215,19 +215,7 @@ export default function ThermalImageUpload({ inspection }) {
   };
 
   // Notes Handlers
-  const handleConfirmNote = () => {
-    if (!newNote.trim()) return;
-    const nextId = notes.length > 0 ? notes[notes.length - 1].id + 1 : 1;
-    const updatedNotes = [...notes, { id: nextId, text: newNote }];
-    setNotes(updatedNotes);
-    setNewNote("");
-    setShowPlaceholder(true);
-  };
-
-  const handleCancelNote = () => {
-    setNewNote("");
-    setShowPlaceholder(true);
-  };
+  // note handlers removed
 
   // 🔥 Legend Component (outside image)
 // 🔥 Legend Component (outside image)
@@ -441,323 +429,16 @@ export default function ThermalImageUpload({ inspection }) {
           className="bg-white rounded-2xl shadow p-8 w-full flex flex-col gap-6 transition-all duration-300"
           style={{ minHeight: "500px" }}
         >
-          <div className="flex flex-row gap-6">
-            <div className="flex-1 flex flex-col gap-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">
-                Thermal Image Comparison
-              </h3>
-              <div className="grid grid-cols-2 gap-8 w-full">
-                {/* Baseline */}
-                <div className="relative w-full flex flex-col items-center">
-                  <div className="flex items-center">
-                    <div
-                      className="relative w-full max-w-md h-72 flex items-center justify-center overflow-hidden bg-gray-100 rounded-lg"
-                      onClick={(e) => handleImageClick(e, "baseline")}
-                      onMouseDown={(e) => handleMouseDown(e, "baseline")}
-                      onMouseMove={(e) => handleMouseMove(e, "baseline")}
-                      onMouseUp={() => handleMouseUp("baseline")}
-                      onMouseLeave={() => handleMouseUp("baseline")}
-                    >
-                      <img
-                        src={baselineImage}
-                        alt="Baseline"
-                        className="w-full h-72 object-cover"
-                        style={getImageStyle("baseline")}
-                      />
-                      <span className="absolute top-0 left-0 mt-4 ml-4 bg-indigo-700 text-white text-sm px-3 py-1 rounded shadow">
-                        Baseline
-                      </span>
-                    </div>
-                    <Legend />
-                  </div>
-                  <span className="text-xs text-gray-500 mt-1">
-                    {baselineDateTime}
-                  </span>
-                </div>
-
-                {/* Current */}
-                <div className="relative w-full flex flex-col items-center">
-                  <div className="flex items-center">
-                    <div
-                      className="relative w-full max-w-md h-72 flex items-center justify-center overflow-hidden bg-gray-100 rounded-lg"
-                      onClick={(e) => handleImageClick(e, "current")}
-                      onMouseDown={(e) => handleMouseDown(e, "current")}
-                      onMouseMove={(e) => handleMouseMove(e, "current")}
-                      onMouseUp={() => handleMouseUp("current")}
-                      onMouseLeave={() => handleMouseUp("current")}
-                    >
-                      <img
-                        src={
-                          thermalImage
-                            ? URL.createObjectURL(thermalImage)
-                            : "/Transformer-Current.jpg"
-                        }
-                        alt="Current"
-                        className="w-full h-72 object-cover"
-                        style={getImageStyle("current")}
-                      />
-
-                      {/* ML Analysis Result Boxes */}
-                      {analysisResults?.boxes && analysisResults.boxes.map((box, index) => {
-                        const [x, y, w, h] = box;
-                        const { zoom, offset } = imageStates["current"];
-                        const boxWidth = w * zoom;
-                        const boxHeight = h * zoom;
-
-                        // Get fault color based on box info
-                        const boxInfo = analysisResults.boxInfo?.[index];
-                        const getFaultColor = (faultType) => {
-                          switch (faultType?.toLowerCase()) {
-                            case 'loose joint': return "#DC2626";
-                            case 'wire overload': return "#F97316";
-                            case 'point overload': return "#FACC15";
-                            default: return "#6B7280";
-                          }
-                        };
-                        
-                        const color = getFaultColor(boxInfo?.boxFault);
-                        const left = x * zoom + offset.x;
-                        const top = y * zoom + offset.y;
-
-                        return (
-                          <div
-                            key={`ml-box-${index}`}
-                            className="absolute"
-                            style={{
-                              width: boxWidth,
-                              height: boxHeight,
-                              left,
-                              top,
-                              border: `2px solid ${color}`,
-                              backgroundColor: `${color}20`,
-                              boxSizing: "border-box",
-                            }}
-                          >
-                            <div
-                              className="absolute flex items-center justify-center rounded-full text-white font-bold text-xs"
-                              style={{
-                                width: 20 * zoom,
-                                height: 20 * zoom,
-                                top: -10 * zoom,
-                                left: -10 * zoom,
-                                backgroundColor: color,
-                                fontSize: Math.max(10, 12 * zoom),
-                              }}
-                            >
-                              {index + 1}
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      <span className="absolute top-0 left-0 mt-4 ml-4 bg-indigo-700 text-white text-sm px-3 py-1 rounded shadow">
-                        Current
-                      </span>
-                    </div>
-                    <Legend />
-                  </div>
-                  <span className="text-xs text-gray-500 mt-1">
-                    {currentDateTime}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Tools */}
-            <div className="w-40 flex flex-col gap-4 items-start border-l pl-4">
-              <h4 className="text-base font-semibold text-gray-700">
-                Annotation Tools
-              </h4>
-              <button
-                className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 w-full"
-                onClick={handleReset}
-              >
-                🔄 Reset View
-              </button>
-              <button
-                className={`flex items-center gap-2 px-3 py-2 rounded w-full ${
-                  tool === "drag"
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-100 hover:bg-gray-200"
-                }`}
-                onClick={() => setTool("drag")}
-              >
-                ✋ Drag
-              </button>
-              <button
-                className={`flex items-center gap-2 px-3 py-2 rounded w-full ${
-                  tool === "zoom"
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-100 hover:bg-gray-200"
-                }`}
-                onClick={() => setTool("zoom")}
-              >
-                🔍 Zoom
-              </button>
-
-              <button
-                className="flex items-center gap-2 px-3 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-800 w-full"
-                onClick={() => setShowRuleset(true)}
-              >
-                ⚙ Error Ruleset
-              </button>
-
-              <div className="border-t pt-4 mt-2 w-full">
-                <button
-                  className="flex items-center gap-2 px-3 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 w-full"
-                  onClick={handleStartOver}
-                >
-                  🔄 Start Over
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* ML Analysis Results */}
-          <div className="mt-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Thermal Analysis Results</h3>
-            
-            {analyzing && (
-              <div className="flex items-center justify-center py-8">
-                <div className="flex items-center space-x-3">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
-                  <span className="text-lg text-gray-600">Analyzing thermal images...</span>
-                </div>
-              </div>
-            )}
-
-            {/* Analysis Results Grid */}
-            {analysisResults && !analyzing && (
-              <div className="grid grid-cols-3 gap-8 mb-6">
-                <div className="bg-gray-50 p-6 rounded-lg text-center">
-                  <p className="text-sm text-gray-600 mb-2">Fault Type</p>
-                  <p className="text-xl font-semibold text-gray-800">
-                    {analysisResults.faultType || 'None detected'}
-                  </p>
-                </div>
-                <div className="bg-gray-50 p-6 rounded-lg text-center">
-                  <p className="text-sm text-gray-600 mb-2">Confidence</p>
-                  <p className="text-xl font-semibold text-gray-800">
-                    {Math.round((analysisResults.confidence || 0) * 100)}%
-                  </p>
-                </div>
-                <div className="bg-gray-50 p-6 rounded-lg text-center">
-                  <p className="text-sm text-gray-600 mb-2">Processing Time</p>
-                  <p className="text-xl font-semibold text-gray-800">
-                    {analysisResults.processingTimeMs || 0}ms
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Detailed Anomalies */}
-            {analysisResults?.boxInfo && analysisResults.boxInfo.length > 0 && (
-              <div className="mt-6">
-                <h4 className="font-semibold text-gray-800 mb-3">Detected Anomalies:</h4>
-                <div className="flex flex-col gap-3">
-                  {analysisResults.boxInfo.map((box, index) => {
-                    const getFaultColor = (faultType) => {
-                      switch (faultType?.toLowerCase()) {
-                        case 'loose joint': return "bg-red-500";
-                        case 'wire overload': return "bg-orange-500";
-                        case 'point overload': return "bg-yellow-500";
-                        default: return "bg-gray-500";
-                      }
-                    };
-
-                    return (
-                      <div
-                        key={index}
-                        className="bg-gray-200 p-3 rounded flex justify-between items-center"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`${getFaultColor(box.boxFault)} text-white px-2 py-1 rounded font-bold`}>
-                            {index + 1}
-                          </div>
-                          <div className="flex flex-col text-sm text-gray-700">
-                            <span>{box.label || box.boxFault}</span>
-                            <span>Position: ({box.x}, {box.y}) | Size: {box.w}×{box.h}</span>
-                          </div>
-                        </div>
-                        <div className="text-sm font-semibold text-gray-800">
-                          Coverage: {(box.areaFrac * 100).toFixed(1)}%
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* No anomalies detected */}
-            {analysisResults && analysisResults.success && (!analysisResults.boxInfo || analysisResults.boxInfo.length === 0) && !analyzing && (
-              <div className="bg-green-50 p-4 rounded-lg">
-                <p className="text-green-800 font-medium">No thermal anomalies detected</p>
-                <p className="text-green-600 text-sm">The thermal analysis shows normal operating conditions.</p>
-              </div>
-            )}
-
-            {/* Analysis Error */}
-            {analysisError && !analyzing && (
-              <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
-                <p className="text-red-800 font-medium">Analysis Error</p>
-                <p className="text-red-600 text-sm">{analysisError}</p>
-              </div>
-            )}
-
-            {/* Analysis not started */}
-            {!analyzing && !analysisResults && !analysisError && showComparison && (
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-blue-800 font-medium">Thermal analysis in progress</p>
-                <p className="text-blue-600 text-sm">The ML model is analyzing the uploaded thermal image for anomalies.</p>
-              </div>
-            )}
-          </div>
-
-          {/* Notes */}
-          {notes.length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">Notes</h3>
-              <div className="flex flex-col gap-3">
-                {notes.map((note) => (
-                  <div
-                    key={note.id}
-                    className="bg-gray-100 p-3 rounded text-gray-700 text-sm"
-                  >
-                    <span className="font-semibold mr-2">Note {note.id}:</span>
-                    {note.text}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Add Note Box */}
-          <div className="mt-4">
-            <textarea
-              value={newNote}
-              onChange={(e) => setNewNote(e.target.value)}
-              onFocus={() => setShowPlaceholder(false)}
-              onBlur={() => !newNote && setShowPlaceholder(true)}
-              placeholder={showPlaceholder ? "Type here to add notes..." : ""}
-              className="w-full border rounded p-3 text-sm text-gray-700 bg-gray-50 resize-none"
-              rows={3}
+          {/* Render the shared ThermalAnalysis component so the Transformer > View flow matches the sidebar UI */}
+          <div className="w-full">
+            <ThermalAnalysis
+              initialBaselineFile={baselineImageFile}
+              initialCandidateFile={thermalImage}
+              autoStart={true}
             />
-            <div className="flex gap-3 mt-3">
-              <button
-                className="bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold text-sm hover:bg-indigo-800"
-                onClick={handleConfirmNote}
-              >
-                Confirm
-              </button>
-              <button
-                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-semibold text-sm hover:bg-gray-200"
-                onClick={handleCancelNote}
-              >
-                Cancel
-              </button>
-            </div>
           </div>
+
+          {/* Notes removed from bottom per request - the ThermalAnalysis component already contains notes section */}
         </div>
       )}
 
