@@ -1,6 +1,71 @@
 import React, { useState, useRef } from 'react';
 import { analyzeThermalImagesUpload, analyzeThermalImagesById, analyzeThermalImageWithBaseline } from './API';
 
+// --- New Component: Add Anomaly Modal (for rule selection) ---
+
+const ANOMALY_RULES = [
+  'Loose Joint',
+  'Wire Overload',
+  'Point Overload',
+  'Oil Leakage',
+  'Bushing Failure',
+  'Other Hotspot'
+];
+
+const AddAnomalyModal = ({ isOpen, onClose, onConfirm }) => {
+  const [selectedRule, setSelectedRule] = useState(ANOMALY_RULES[0]);
+
+  if (!isOpen) return null;
+
+  const handleConfirm = () => {
+    onConfirm(selectedRule);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-bold text-gray-800">Add Anomaly Rule</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 text-2xl"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <label className="block text-sm font-medium text-gray-700">
+            Select Anomaly Rule
+          </label>
+          <select
+            value={selectedRule}
+            onChange={(e) => setSelectedRule(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            {ANOMALY_RULES.map(rule => (
+              <option key={rule} value={rule}>{rule}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={handleConfirm}
+            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+// --- Existing Component: AnalysisResults (Modified) ---
+
 // Component for displaying ML analysis results
 const AnalysisResults = ({ results, processingTime }) => {
   if (!results) return null;
@@ -10,7 +75,10 @@ const AnalysisResults = ({ results, processingTime }) => {
       case 'loose joint': return '#DC2626'; // Red
       case 'wire overload': return '#F97316'; // Orange
       case 'point overload': return '#FACC15'; // Yellow
-      default: return '#10B981'; // Green for normal
+      case 'oil leakage': return '#3B82F6'; // Blue
+      case 'bushing failure': return '#8B5CF6'; // Violet
+      case 'other hotspot': return '#10B981'; // Green
+      default: return '#10B981'; // Green for normal/default
     }
   };
 
@@ -75,24 +143,35 @@ const AnalysisResults = ({ results, processingTime }) => {
           </div>
           <div className="space-y-2">
             {results.boxInfo.map((box, index) => {
-              // Calculate confidence for this specific anomaly (using area fraction as a proxy)
-              const anomalyConfidence = box.areaFrac > 0.05 ? 0.75 : box.areaFrac > 0.02 ? 0.65 : 0.55;
-              const confidencePercent = Math.round(anomalyConfidence * 100);
+              const isDeleted = box.deleted;
+              const isManual = box.isManual;
               
-              // Determine severity based on area coverage
-              const severity = box.areaFrac > 0.05 ? 'HIGH' : box.areaFrac > 0.02 ? 'MEDIUM' : 'LOW';
+              const itemBgClass = isDeleted ? 'bg-gray-100' : isManual ? 'bg-yellow-50 border-yellow-300 border' : 'bg-gray-50';
+              const textClass = isDeleted ? 'text-gray-500' : 'text-gray-800';
+              const labelClass = isDeleted ? 'text-gray-500' : 'font-medium text-gray-800';
+              const fontClass = isDeleted ? 'font-normal' : 'font-semibold';
+              const subTextClass = isDeleted ? 'text-gray-400' : 'text-gray-600';
               
-              // Color scheme based on severity - used for both badge and bounding box
-              const boxColor = severity === 'HIGH' ? '#DC2626' :    // Red for high
-                              severity === 'MEDIUM' ? '#F97316' :   // Orange for medium
-                              '#FACC15';                            // Yellow for low
+              // Only calculate confidence/severity for AI-detected boxes
+              const anomalyConfidence = !isManual ? (box.areaFrac > 0.05 ? 0.75 : box.areaFrac > 0.02 ? 0.65 : 0.55) : null;
+              const confidencePercent = anomalyConfidence ? Math.round(anomalyConfidence * 100) : null;
               
-              const severityColor = severity === 'HIGH' ? 'text-red-600 bg-red-100' :
-                                   severity === 'MEDIUM' ? 'text-orange-600 bg-orange-100' :
-                                   'text-yellow-600 bg-yellow-100';
+              const severity = !isManual ? (box.areaFrac > 0.05 ? 'HIGH' : box.areaFrac > 0.02 ? 'MEDIUM' : 'LOW') : null;
               
+              const boxColor = isDeleted ? '#6B7280' : 
+                               (severity === 'HIGH' ? '#DC2626' : 
+                               severity === 'MEDIUM' ? '#F97316' : 
+                               severity === 'LOW' ? '#FACC15' : 
+                               getFaultColor(box.label || box.boxFault)); 
+              
+              const severityColor = isDeleted ? 'text-gray-500 bg-gray-200' : 
+                                    (severity === 'HIGH' ? 'text-red-600 bg-red-100' :
+                                    severity === 'MEDIUM' ? 'text-orange-600 bg-orange-100' :
+                                    severity === 'LOW' ? 'text-yellow-600 bg-yellow-100' :
+                                    'text-blue-600 bg-blue-100'); 
+
               return (
-                <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                <div key={index} className={`${itemBgClass} p-3 rounded-lg`}>
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center space-x-3">
                       <div 
@@ -107,34 +186,68 @@ const AnalysisResults = ({ results, processingTime }) => {
                         {index + 1}
                       </div>
                       <div>
-                        <p className="font-medium text-gray-800">{box.label || box.boxFault}</p>
+                        <p className={labelClass}>
+                          {box.label || box.boxFault} 
+                          {isManual && (
+                            <span className="ml-2 text-xs font-bold text-yellow-700">
+                              (Manual by {box.createdBy ?? 'Manual User'})
+                            </span>
+                          )}
+                        </p>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-8 ml-10">
+                  <div className={`flex items-center space-x-8 ml-10 ${isDeleted ? 'opacity-50' : ''}`}>
+                    
+                    {/* Only show Confidence and Severity for AI boxes */}
+                    {!isManual && (
+                      <>
+                        <div>
+                          <p className={`text-sm ${subTextClass}`}>Confidence</p>
+                          <p className={`text-lg ${fontClass} ${textClass}`}>{confidencePercent}%</p>
+                        </div>
+                        <div>
+                          <p className={`text-sm ${subTextClass}`}>Severity</p>
+                          <span className={`px-2 py-1 rounded text-sm ${fontClass} ${severityColor}`}>
+                            {severity}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    
                     <div>
-                      <p className="text-sm text-gray-600">Confidence</p>
-                      <p className="text-lg font-semibold text-gray-800">{confidencePercent}%</p>
+                      <p className={`text-sm ${subTextClass}`}>Coverage</p>
+                      <p className={`text-lg ${fontClass} ${textClass}`}>{(box.areaFrac * 100).toFixed(1)}%</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Severity</p>
-                      <span className={`px-2 py-1 rounded text-sm font-semibold ${severityColor}`}>
-                        {severity}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Coverage</p>
-                      <p className="text-lg font-semibold text-gray-800">{(box.areaFrac * 100).toFixed(1)}%</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Detected</p>
-                      <p className="text-lg font-semibold text-gray-800">
+                      <p className={`text-sm ${subTextClass}`}>Detected</p>
+                      <p className={`text-lg ${fontClass} ${textClass}`}>
                         {new Date().toLocaleDateString('en-GB')} 
                         {' '}
                         {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
+
+                    {isManual && box.createdBy && (
+                      <div>
+                        <p className={`text-sm ${subTextClass}`}>Created By</p>
+                        <p className={`text-lg ${fontClass} ${textClass}`}>{box.createdBy}</p>
+                      </div>
+                    )}
                   </div>
+
+                  {/* Deletion Log */}
+                  {isDeleted && (
+                    <div className="mt-4 pt-2 border-t border-gray-200">
+                      <p className="text-xs text-gray-500 font-semibold">Deletion Log</p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Deleted by: <span className="font-medium">{box.deletedBy}</span>
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        Date: <span className="font-medium">{new Date(box.deletedAt).toLocaleString('en-GB')}</span>
+                      </p>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -153,8 +266,30 @@ const AnalysisResults = ({ results, processingTime }) => {
   );
 };
 
+
+// --- Existing Component: ThermalImageDisplay (Modified for Adjust Marker) ---
+
 // Component for displaying thermal images with bounding boxes
-const ThermalImageDisplay = ({ imageUrl, title, boxes = [], boxInfo = [], imageWidth, imageHeight, tool, onZoomChange, onResetView, className = "" }) => {
+const ThermalImageDisplay = ({ 
+  imageUrl, 
+  title, 
+  boxes = [], 
+  boxInfo = [], 
+  imageWidth, 
+  imageHeight, 
+  tool, 
+  onZoomChange, 
+  onResetView, 
+  onDeleteBox, 
+  className = "",
+  isCandidateImage = false, 
+  onDrawAnomaly,
+  drawingAnomaly,
+  // NEW PROPS
+  currentAdjustment,
+  setCurrentAdjustment,
+  setResults 
+}) => {
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
@@ -163,7 +298,11 @@ const ThermalImageDisplay = ({ imageUrl, title, boxes = [], boxInfo = [], imageW
   const containerRef = useRef(null);
   const imgRef = useRef(null);
 
-  // Expose zoom and reset to parent
+  // Drawing state for manual anomaly
+  const [drawing, setDrawing] = useState(false);
+  const [startPoint, setStartPoint] = useState(null);
+  const [currentRect, setCurrentRect] = useState(null);
+
   React.useEffect(() => {
     if (onZoomChange) {
       onZoomChange({ zoom, setZoom, offset, setOffset });
@@ -180,23 +319,32 @@ const ThermalImageDisplay = ({ imageUrl, title, boxes = [], boxInfo = [], imageW
   }, [onResetView]);
 
   const getFaultColor = (index, boxInfo) => {
-    // Determine severity based on area coverage from boxInfo
     if (boxInfo && boxInfo[index]) {
-      const areaFrac = boxInfo[index].areaFrac;
+      const box = boxInfo[index];
+      if (box.isManual) {
+        switch (box.label?.toLowerCase()) {
+          case 'loose joint': return '#DC2626'; 
+          case 'wire overload': return '#F97316'; 
+          case 'point overload': return '#FACC15'; 
+          case 'oil leakage': return '#3B82F6'; 
+          case 'bushing failure': return '#8B5CF6'; 
+          case 'other hotspot': return '#10B981'; 
+          default: return '#10B981';
+        }
+      }
+      
+      const areaFrac = box.areaFrac;
       const severity = areaFrac > 0.05 ? 'HIGH' : areaFrac > 0.02 ? 'MEDIUM' : 'LOW';
       
-      // Return color based on severity
-      return severity === 'HIGH' ? '#DC2626' :    // Red for high
-             severity === 'MEDIUM' ? '#F97316' :  // Orange for medium
-             '#FACC15';                            // Yellow for low
+      return severity === 'HIGH' ? '#DC2626' :
+             severity === 'MEDIUM' ? '#F97316' :
+             '#FACC15';
     }
     
-    // Fallback to cycling colors if boxInfo not available
     const colors = ['#DC2626', '#F97316', '#FACC15', '#10B981', '#3B82F6'];
     return colors[index % colors.length];
   };
 
-  // Get actual displayed image size after load
   const handleImageLoad = () => {
     if (imgRef.current) {
       const rect = imgRef.current.getBoundingClientRect();
@@ -207,45 +355,252 @@ const ThermalImageDisplay = ({ imageUrl, title, boxes = [], boxInfo = [], imageW
     }
   };
 
-  const handleImageClick = (e) => {
-    if (tool !== 'zoom') return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
+  const scaleX = imageWidth && displaySize.width ? displaySize.width / imageWidth : 0;
+  const scaleY = imageHeight && displaySize.height ? displaySize.height / imageHeight : 0;
+  
+  const getScaledCoords = (clientX, clientY) => {
+    if (!imgRef.current) return { originalX: 0, originalY: 0 };
+    
+    const imageRect = imgRef.current.getBoundingClientRect();
 
-    const newZoom = zoom >= 3 ? 1 : zoom + 0.5;
-    const scale = newZoom / zoom;
-    const newOffset = {
-      x: offset.x - x * (scale - 1),
-      y: offset.y - y * (scale - 1),
-    };
-    setZoom(newZoom);
-    setOffset(newOffset);
+    const xOnScreen = (clientX - imageRect.left) / zoom;
+    const yOnScreen = (clientY - imageRect.top) / zoom;
+
+    const originalX = xOnScreen / scaleX;
+    const originalY = yOnScreen / scaleY;
+
+    const clampedX = Math.max(0, Math.min(originalX, imageWidth));
+    const clampedY = Math.max(0, Math.min(originalY, imageHeight));
+
+    return { originalX: clampedX, originalY: clampedY };
+  };
+
+  const updateBoxState = (index, newCoords) => {
+    setResults(prevResults => {
+      if (!prevResults || !prevResults.boxes) return prevResults;
+
+      const newBoxes = [...prevResults.boxes];
+      const newBoxInfo = [...prevResults.boxInfo];
+      
+      const [x, y, w, h] = newCoords;
+      const imageAreaProxy = (prevResults.imageWidth || 1000) * (prevResults.imageHeight || 1000);
+      const boxArea = w * h;
+      const areaFrac = boxArea / imageAreaProxy;
+
+      newBoxes[index] = { ...newBoxes[index], coords: newCoords };
+      
+      if (newBoxInfo[index]) {
+          newBoxInfo[index] = { ...newBoxInfo[index], areaFrac: areaFrac };
+      }
+
+      return { ...prevResults, boxes: newBoxes, boxInfo: newBoxInfo };
+    });
   };
 
   const handleMouseDown = (e) => {
-    if (tool !== 'drag') return;
-    setDragging(true);
-    setStartPos({ x: e.clientX - offset.x, y: e.clientY - offset.y });
+    if (e.button !== 0) return;
+
+    const targetClass = e.target.className;
+    
+    // Stop image pan/zoom/draw if interaction is on a handle/box-content during adjustment
+    if (isCandidateImage && tool === 'adjust' && (targetClass.includes('box-handle') || targetClass.includes('box-content'))) {
+        e.stopPropagation();
+    }
+
+    if (tool === 'drag') {
+      setDragging(true);
+      setStartPos({ x: e.clientX - offset.x, y: e.clientY - offset.y });
+    } else if (isCandidateImage && tool === 'drawAnomaly' && !drawing) {
+      setDrawing(true);
+      const { originalX, originalY } = getScaledCoords(e.clientX, e.clientY);
+      setStartPoint({ x: originalX, y: originalY });
+      setCurrentRect({ start: { x: originalX, y: originalY }, end: { x: originalX, y: originalY } });
+    } else if (isCandidateImage && tool === 'adjust' && targetClass.includes('box-handle')) {
+        const index = parseInt(e.target.dataset.index);
+        const handle = e.target.dataset.handle;
+        const [x, y, w, h] = boxes[index].coords;
+        
+        setCurrentAdjustment({
+            index: index,
+            mode: 'resize',
+            handle: handle,
+            initialBox: { x, y, w, h },
+            startClientX: e.clientX,
+            startClientY: e.clientY,
+        });
+    } else if (isCandidateImage && tool === 'adjust' && targetClass.includes('box-content')) {
+        const index = parseInt(e.target.dataset.index);
+        const [x, y, w, h] = boxes[index].coords;
+        
+        setCurrentAdjustment({
+            index: index,
+            mode: 'drag',
+            handle: null,
+            initialBox: { x, y, w, h },
+            startClientX: e.clientX,
+            startClientY: e.clientY,
+        });
+    }
   };
 
   const handleMouseMove = (e) => {
-    if (!dragging || tool !== 'drag') return;
-    setOffset({ x: e.clientX - startPos.x, y: e.clientY - startPos.y });
+    if (dragging && tool === 'drag') {
+      setOffset({ x: e.clientX - startPos.x, y: e.clientY - startPos.y });
+      return;
+    } 
+    
+    if (drawing && isCandidateImage && tool === 'drawAnomaly') {
+      const { originalX, originalY } = getScaledCoords(e.clientX, e.clientY);
+      setCurrentRect(prev => ({ ...prev, end: { x: originalX, y: originalY } }));
+      return;
+    }
+
+    if (currentAdjustment && isCandidateImage) {
+        const { index, mode, handle, initialBox, startClientX, startClientY } = currentAdjustment;
+
+        const deltaX = (e.clientX - startClientX) / zoom / scaleX;
+        const deltaY = (e.clientY - startClientY) / zoom / scaleY;
+
+        let { x, y, w, h } = initialBox;
+        let newX = x, newY = y, newW = w, newH = h;
+        
+        if (mode === 'drag') {
+            newX = x + deltaX;
+            newY = y + deltaY;
+        } else if (mode === 'resize') {
+            switch (handle) {
+                case 'n': newY = y + deltaY; newH = h - deltaY; break;
+                case 's': newH = h + deltaY; break;
+                case 'w': newX = x + deltaX; newW = w - deltaX; break;
+                case 'e': newW = w + deltaX; break;
+                case 'nw': newX = x + deltaX; newW = w - deltaX; newY = y + deltaY; newH = h - deltaY; break;
+                case 'ne': newW = w + deltaX; newY = y + deltaY; newH = h - deltaY; break;
+                case 'sw': newX = x + deltaX; newW = w - deltaX; newH = h + deltaY; break;
+                case 'se': newW = w + deltaX; newH = h + deltaY; break;
+            }
+        }
+        
+        // Ensure width/height don't go negative and positions stay logical
+        newW = Math.max(5, newW);
+        newH = Math.max(5, newH);
+        
+        // Adjust position if resizing flipped the box
+        if (mode === 'resize') {
+            if (newW < 5 && newX !== x) newX = x + w;
+            if (newH < 5 && newY !== y) newY = y + h;
+        }
+
+        // Update the box visually immediately
+        setResults(prevResults => {
+            const tempBoxes = [...prevResults.boxes];
+            tempBoxes[index] = { ...tempBoxes[index], coords: [newX, newY, newW, newH] };
+            return { ...prevResults, boxes: tempBoxes };
+        });
+    }
   };
 
-  const handleMouseUp = () => {
-    setDragging(false);
+  const handleMouseUp = (e) => {
+    if (dragging) {
+      setDragging(false);
+    } else if (drawing && isCandidateImage && tool === 'drawAnomaly') {
+      setDrawing(false);
+      
+      if (!currentRect) return;
+
+      const x1 = currentRect.start.x;
+      const y1 = currentRect.start.y;
+      const x2 = currentRect.end.x;
+      const y2 = currentRect.end.y;
+
+      const minX = Math.min(x1, x2);
+      const minY = Math.min(y1, y2);
+      const width = Math.abs(x1 - x2);
+      const height = Math.abs(y1 - y2);
+
+      if (width > 5 && height > 5) { 
+        const newBoxCoords = [minX, minY, width, height];
+        onDrawAnomaly(newBoxCoords);
+      }
+      
+      setStartPoint(null);
+      setCurrentRect(null);
+    } else if (currentAdjustment) {
+        const { index } = currentAdjustment;
+        const finalCoords = boxes[index].coords;
+        updateBoxState(index, finalCoords);
+        setCurrentAdjustment(null);
+    }
+  };
+  
+  const handleImageClick = (e) => {
+    if (tool === 'zoom' && !drawing && !dragging && !currentAdjustment) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+
+      const newZoom = zoom >= 3 ? 1 : zoom + 0.5;
+      const scale = newZoom / zoom;
+      const newOffset = {
+        x: offset.x - x * (scale - 1),
+        y: offset.y - y * (scale - 1),
+      };
+      setZoom(newZoom);
+      setOffset(newOffset);
+    }
   };
 
-  const handleResetView = () => {
-    setZoom(1);
-    setOffset({ x: 0, y: 0 });
-  };
+  let cursorStyle = 'default';
+  if (tool === 'drag' || dragging) {
+    cursorStyle = 'grab';
+  } else if (tool === 'zoom') {
+    cursorStyle = 'zoom-in';
+  } else if (isCandidateImage && tool === 'drawAnomaly') {
+    cursorStyle = 'crosshair'; 
+  } else if (isCandidateImage && tool === 'adjust') {
+    cursorStyle = 'move'; 
+  }
+  
+  if (currentAdjustment?.mode === 'resize') {
+    const handleCursors = {
+        'n': 'ns-resize', 's': 'ns-resize', 'e': 'ew-resize', 'w': 'ew-resize',
+        'ne': 'nesw-resize', 'nw': 'nwse-resize', 'se': 'nwse-resize', 'sw': 'nesw-resize'
+    };
+    cursorStyle = handleCursors[currentAdjustment.handle] || 'move';
+  }
 
-  // Calculate scale factors from ML image dimensions to displayed dimensions
-  const scaleX = imageWidth && displaySize.width ? displaySize.width / imageWidth : 0;
-  const scaleY = imageHeight && displaySize.height ? displaySize.height / imageHeight : 0;
+  let drawnBoxStyle = {};
+  if (drawing && currentRect && scaleX > 0 && scaleY > 0) {
+    const minX = Math.min(currentRect.start.x, currentRect.end.x) * scaleX;
+    const minY = Math.min(currentRect.start.y, currentRect.end.y) * scaleY;
+    const width = Math.abs(currentRect.start.x - currentRect.end.x) * scaleX;
+    const height = Math.abs(currentRect.start.y - currentRect.end.y) * scaleY;
+
+    drawnBoxStyle = {
+      position: 'absolute',
+      left: `${minX}px`,
+      top: `${minY}px`,
+      width: `${width}px`,
+      height: `${height}px`,
+      border: `2px dashed #00bfff`, 
+      backgroundColor: '#00bfff20',
+      pointerEvents: 'none', 
+      boxSizing: 'border-box',
+    };
+  }
+
+  const handleHandleMouseDown = (e) => {
+    if (isCandidateImage && tool === 'adjust') {
+        handleMouseDown(e); 
+    }
+  };
+  
+  const handleBoxContentMouseDown = (e) => {
+      if (isCandidateImage && tool === 'adjust') {
+        handleMouseDown(e); 
+      } else {
+        e.stopPropagation();
+      }
+  };
 
   return (
     <div className={`relative ${className}`}>
@@ -258,13 +613,13 @@ const ThermalImageDisplay = ({ imageUrl, title, boxes = [], boxInfo = [], imageW
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        style={{ cursor: tool === 'drag' ? 'grab' : tool === 'zoom' ? 'zoom-in' : 'default' }}
+        style={{ cursor: cursorStyle }}
       >
         <div 
           style={{ 
             transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
             transformOrigin: 'center',
-            transition: dragging ? 'none' : 'transform 0.2s ease',
+            transition: (dragging || currentAdjustment) ? 'none' : 'transform 0.2s ease',
             position: 'relative',
             display: 'inline-block'
           }}
@@ -278,38 +633,82 @@ const ThermalImageDisplay = ({ imageUrl, title, boxes = [], boxInfo = [], imageW
             style={{ display: 'block' }}
           />
           
-          {/* Bounding boxes overlay - positioned relative to image */}
-          {boxes && boxes.length > 0 && scaleX > 0 && scaleY > 0 && boxes.map((box, index) => {
-            const [x, y, w, h] = box;
+          {/* Currently drawn anomaly box */}
+          {drawnBoxStyle.width > 0 && <div style={drawnBoxStyle} />}
+
+          {/* Bounding boxes overlay */}
+          {boxes && boxes.length > 0 && scaleX > 0 && scaleY > 0 && boxes.map((boxData, index) => {
+            if (boxData.deleted) {
+              return null;
+            }
             
-            // Convert ML coordinates to displayed image coordinates
+            const [x, y, w, h] = boxData.coords;
+            
             const boxLeft = x * scaleX;
             const boxTop = y * scaleY;
             const boxWidth = w * scaleX;
             const boxHeight = h * scaleY;
             
             const color = getFaultColor(index, boxInfo);
-            
+            const isAdjusting = currentAdjustment?.index === index;
+            const isActiveTool = isCandidateImage && tool === 'adjust';
+
             const boxStyle = {
               position: 'absolute',
               left: `${boxLeft}px`,
               top: `${boxTop}px`,
               width: `${boxWidth}px`,
               height: `${boxHeight}px`,
-              border: `2px solid ${color}`,
+              border: `2px ${isAdjusting ? 'dashed' : 'solid'} ${color}`,
               backgroundColor: `${color}20`,
-              pointerEvents: 'none',
-              boxSizing: 'border-box'
+              boxSizing: 'border-box',
+              cursor: isActiveTool ? 'move' : 'default',
             };
 
             return (
-              <div key={index} style={boxStyle}>
+              <div key={index} style={boxStyle} className="box-content" data-index={index} onMouseDown={handleBoxContentMouseDown}>
+                
+                {/* Error Number in Left Upper Corner */}
                 <div 
-                  className="absolute -top-6 -left-1 bg-white px-2 py-1 rounded text-xs font-bold shadow"
+                  className="absolute -top-6 -left-1 bg-white px-2 py-1 rounded text-xs font-bold shadow pointer-events-none"
                   style={{ color: color }}
                 >
                   {index + 1}
                 </div>
+                
+                {/* X Mark in Right Upper Corner */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteBox(index);
+                  }}
+                  className="absolute -top-3 -right-3 w-6 h-6 rounded-full bg-white text-gray-600 hover:text-red-600 transition-colors flex items-center justify-center text-sm font-bold shadow-md"
+                  style={{ pointerEvents: isActiveTool ? 'none' : 'auto' }} 
+                >
+                  &times;
+                </button>
+                
+                {/* RESIZE HANDLES */}
+                {isActiveTool && (
+                    <>
+                        {['nw', 'n', 'ne', 'w', 'e', 'sw', 's', 'se'].map(handle => (
+                            <div 
+                                key={handle}
+                                data-handle={handle}
+                                data-index={index}
+                                className={`box-handle w-3 h-3 bg-white border border-gray-600 absolute rounded-full shadow-md`}
+                                style={{ 
+                                    cursor: `${handle}-resize`,
+                                    top: ['n', 'ne', 'nw'].includes(handle) ? '-6px' : ['s', 'se', 'sw'].includes(handle) ? `${boxHeight - 6}px` : `${boxHeight / 2 - 6}px`,
+                                    left: ['w', 'nw', 'sw'].includes(handle) ? '-6px' : ['e', 'ne', 'se'].includes(handle) ? `${boxWidth - 6}px` : `${boxWidth / 2 - 6}px`,
+                                    zIndex: 10,
+                                }}
+                                onMouseDown={handleHandleMouseDown}
+                                onClick={(e) => e.stopPropagation()} 
+                            />
+                        ))}
+                    </>
+                )}
               </div>
             );
           })}
@@ -319,7 +718,8 @@ const ThermalImageDisplay = ({ imageUrl, title, boxes = [], boxInfo = [], imageW
   );
 };
 
-// Error Ruleset Modal Component
+// --- Existing Component: ErrorRulesetModal (Unchanged) ---
+
 const ErrorRulesetModal = ({ isOpen, onClose, ruleset, setRuleset }) => {
   if (!isOpen) return null;
 
@@ -414,8 +814,10 @@ const ErrorRulesetModal = ({ isOpen, onClose, ruleset, setRuleset }) => {
   );
 };
 
-// Main Thermal Analysis Component
-export default function ThermalAnalysis({ initialBaselineFile = null, initialCandidateFile = null, autoStart = true }) {
+
+// --- Main Thermal Analysis Component (Modified) ---
+
+export default function ThermalAnalysis({ initialBaselineFile = null, initialCandidateFile = null, autoStart = true, userName }) {
   const [baselineFile, setBaselineFile] = useState(null);
   const [candidateFile, setCandidateFile] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -426,6 +828,11 @@ export default function ThermalAnalysis({ initialBaselineFile = null, initialCan
   const [candidateImageControls, setCandidateImageControls] = useState(null);
   const [resetFunctions, setResetFunctions] = useState({ baseline: null, candidate: null });
   const [showRulesetModal, setShowRulesetModal] = useState(false);
+  
+  const [showAddAnomalyModal, setShowAddAnomalyModal] = useState(false);
+  const [drawingAnomaly, setDrawingAnomaly] = useState(null);
+  const [currentAdjustment, setCurrentAdjustment] = useState(null);
+  
   const [ruleset, setRuleset] = useState({
     tempDifference: '10',
     rule2: false,
@@ -467,8 +874,10 @@ export default function ThermalAnalysis({ initialBaselineFile = null, initialCan
       resetFunctions.candidate();
     }
     setTool(null);
+    setDrawingAnomaly(null);
+    setCurrentAdjustment(null); 
   };
-
+  
   const handleAnalyze = async () => {
     if (!baselineFile || !candidateFile) {
       setError('Please select both baseline and thermal images');
@@ -481,30 +890,120 @@ export default function ThermalAnalysis({ initialBaselineFile = null, initialCan
 
     try {
       const analysisResults = await analyzeThermalImagesUpload(baselineFile, candidateFile);
-      setResults(analysisResults);
+      const resultsWithDeletionStatus = {
+        ...analysisResults,
+        boxInfo: analysisResults.boxInfo ? analysisResults.boxInfo.map(box => ({ ...box, deleted: false, isManual: false })) : [],
+        boxes: analysisResults.boxes ? analysisResults.boxes.map(box => ({ coords: box, deleted: false })) : []
+      };
+      setResults(resultsWithDeletionStatus);
     } catch (err) {
       setError(`Analysis failed: ${err.message}`);
     } finally {
       setAnalyzing(false);
     }
   };
+  
+  const handleDeleteBox = (index) => {
+    setResults(prevResults => {
+      if (!prevResults || !prevResults.boxInfo || !prevResults.boxes) return prevResults;
 
-  // If component is mounted with initial files provided (from Transformer upload flow),
-  // populate state and optionally auto-start analysis to match the Transformer flow behavior.
+      const newBoxInfo = [...prevResults.boxInfo];
+      const newBoxes = [...prevResults.boxes];
+      
+      if (index >= 0 && index < newBoxInfo.length) {
+        newBoxInfo[index] = {
+          ...newBoxInfo[index],
+          deleted: true,
+          deletedBy: userName,
+          deletedAt: new Date().toISOString()
+        };
+        
+        newBoxes[index] = {
+          ...newBoxes[index],
+          deleted: true,
+        };
+      }
+
+      return {
+        ...prevResults,
+        boxInfo: newBoxInfo,
+        boxes: newBoxes,
+      };
+    });
+  };
+
+  const handleStartDrawAnomaly = () => {
+    if (!candidateFile) {
+      setError('Please upload a Thermal Image first to add an anomaly.');
+      return;
+    }
+    setShowAddAnomalyModal(true);
+  };
+  
+  const handleConfirmAnomalyRule = (rule) => {
+    setDrawingAnomaly(rule);
+    setTool('drawAnomaly');
+  };
+
+  const handleDrawAnomaly = (newBoxCoords) => {
+    setTool(null);
+    setDrawingAnomaly(null);
+
+    setResults(prevResults => {
+      
+      const imageWidth = prevResults?.imageWidth || 1000;
+      const imageHeight = prevResults?.imageHeight || 1000;
+      const imageAreaProxy = imageWidth * imageHeight;
+      
+      const [x, y, w, h] = newBoxCoords;
+      const boxArea = w * h;
+      const areaFrac = boxArea / imageAreaProxy;
+
+      const newBox = {
+        coords: newBoxCoords,
+        deleted: false,
+      };
+      
+      const newBoxInfoItem = {
+        boxFault: drawingAnomaly, 
+        label: drawingAnomaly,
+        areaFrac: areaFrac, 
+        isManual: true, 
+        createdBy: userName, 
+        deleted: false,
+      };
+
+      const existingBoxes = prevResults?.boxes || [];
+      const existingBoxInfo = prevResults?.boxInfo || [];
+      
+      return {
+        ...prevResults,
+        success: true,
+        imageWidth: imageWidth,
+        imageHeight: imageHeight,
+        boxes: [...existingBoxes, newBox],
+        boxInfo: [...existingBoxInfo, newBoxInfoItem]
+      };
+    });
+  };
+  
   React.useEffect(() => {
     if (initialBaselineFile) setBaselineFile(initialBaselineFile);
     if (initialCandidateFile) setCandidateFile(initialCandidateFile);
 
-    // Auto start analysis when both initial files are provided and autoStart is true
     if (autoStart && initialBaselineFile && initialCandidateFile) {
-      // call handleAnalyze after state updates
       (async () => {
         setAnalyzing(true);
         setError(null);
         setResults(null);
         try {
           const analysisResults = await analyzeThermalImagesUpload(initialBaselineFile, initialCandidateFile);
-          setResults(analysisResults);
+          const resultsWithDeletionStatus = {
+            ...analysisResults,
+            boxInfo: analysisResults.boxInfo ? analysisResults.boxInfo.map(box => ({ ...box, deleted: false, isManual: false })) : [],
+            boxes: analysisResults.boxes ? analysisResults.boxes.map(box => ({ coords: box, deleted: false })) : []
+          };
+          setResults(resultsWithDeletionStatus);
         } catch (err) {
           setError(`Analysis failed: ${err.message}`);
         } finally {
@@ -512,8 +1011,7 @@ export default function ThermalAnalysis({ initialBaselineFile = null, initialCan
         }
       })();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialBaselineFile, initialCandidateFile]);
+  }, [initialBaselineFile, initialCandidateFile, autoStart]);
 
   const handleStartOver = () => {
     setBaselineFile(null);
@@ -542,12 +1040,12 @@ export default function ThermalAnalysis({ initialBaselineFile = null, initialCan
     <div className="max-w-7xl mx-auto p-6">
       <h2 className="text-2xl font-bold mb-6 text-gray-800">Thermal Analysis</h2>
       
-      {/* File Upload Section */}
+      {/* File Upload Section (Unchanged) */}
       <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
         <h3 className="text-lg font-semibold mb-4 text-gray-800">Upload Thermal Images</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Baseline Image Upload */}
+          {/* Baseline Image Upload (Unchanged) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Baseline Image
@@ -574,7 +1072,7 @@ export default function ThermalAnalysis({ initialBaselineFile = null, initialCan
             </div>
           </div>
 
-          {/* Candidate Image Upload */}
+          {/* Candidate Image Upload (Unchanged) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Thermal Image
@@ -602,7 +1100,7 @@ export default function ThermalAnalysis({ initialBaselineFile = null, initialCan
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Action Buttons (Unchanged) */}
         <div className="flex space-x-4 mt-6">
           <button
             onClick={handleAnalyze}
@@ -624,7 +1122,7 @@ export default function ThermalAnalysis({ initialBaselineFile = null, initialCan
           </button>
         </div>
 
-        {/* Error Display */}
+        {/* Error Display (Unchanged) */}
         {error && (
           <div className="mt-4 bg-red-50 border border-red-200 p-4 rounded-lg">
             <p className="text-red-800">{error}</p>
@@ -658,6 +1156,13 @@ export default function ThermalAnalysis({ initialBaselineFile = null, initialCan
                   tool={tool}
                   onZoomChange={setCandidateImageControls}
                   onResetView={(resetFn) => setResetFunctions(prev => ({ ...prev, candidate: resetFn }))}
+                  onDeleteBox={handleDeleteBox}
+                  isCandidateImage={true}
+                  onDrawAnomaly={handleDrawAnomaly}
+                  drawingAnomaly={drawingAnomaly}
+                  currentAdjustment={currentAdjustment}
+                  setCurrentAdjustment={setCurrentAdjustment}
+                  setResults={setResults}
                 />
               )}
             </div>
@@ -675,8 +1180,22 @@ export default function ThermalAnalysis({ initialBaselineFile = null, initialCan
                     : 'bg-gray-100 hover:bg-gray-200'
                 }`}
                 onClick={() => setTool('drag')}
+                disabled={drawingAnomaly !== null}
               >
                 ✋ Drag
+              </button>
+
+              {/* NEW BUTTON: Adjust Marker */}
+              <button
+                className={`flex items-center gap-2 px-3 py-2 rounded w-full font-semibold transition-colors ${
+                  tool === 'adjust'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-gray-100 hover:bg-gray-200'
+                }`}
+                onClick={() => setTool('adjust')}
+                disabled={drawingAnomaly !== null}
+              >
+                ↔️ Adjust Marker
               </button>
               
               <div className="w-full">
@@ -685,12 +1204,14 @@ export default function ThermalAnalysis({ initialBaselineFile = null, initialCan
                   <button
                     className="flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-gray-100 rounded hover:bg-gray-200"
                     onClick={handleZoomIn}
+                    disabled={drawingAnomaly !== null}
                   >
                     🔍 +
                   </button>
                   <button
                     className="flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-gray-100 rounded hover:bg-gray-200"
                     onClick={handleZoomOut}
+                    disabled={drawingAnomaly !== null}
                   >
                     🔍 −
                   </button>
@@ -701,7 +1222,20 @@ export default function ThermalAnalysis({ initialBaselineFile = null, initialCan
                 className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 w-full"
                 onClick={handleResetView}
               >
-                � Reset View
+                🔄 Reset View
+              </button>
+
+              {/* NEW BUTTON: Add Anomaly */}
+              <button
+                className={`flex items-center gap-2 px-3 py-2 rounded w-full font-semibold transition-colors ${
+                  tool === 'drawAnomaly'
+                    ? 'bg-red-600 text-white animate-pulse' 
+                    : 'bg-green-600 text-white hover:bg-green-700'
+                }`}
+                onClick={handleStartDrawAnomaly}
+                disabled={!candidateFile} 
+              >
+                ✏️ Add Anomaly
               </button>
 
               <button
@@ -710,29 +1244,27 @@ export default function ThermalAnalysis({ initialBaselineFile = null, initialCan
               >
                 ⚙️ Error Ruleset
               </button>
-
-              <div className="border-t pt-4 mt-2 w-full">
-                <button
-                  className="flex items-center gap-2 px-3 py-2 bg-red-100 text-red-700 rounded hover:bg-red-200 w-full"
-                  onClick={handleStartOver}
-                >
-                  🔄 Start Over
-                </button>
-              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Error Ruleset Modal */}
+      {/* Error Ruleset Modal (Unchanged) */}
       <ErrorRulesetModal 
         isOpen={showRulesetModal}
         onClose={() => setShowRulesetModal(false)}
         ruleset={ruleset}
         setRuleset={setRuleset}
       />
+      
+      {/* NEW MODAL: Add Anomaly Modal */}
+      <AddAnomalyModal
+        isOpen={showAddAnomalyModal}
+        onClose={() => setShowAddAnomalyModal(false)}
+        onConfirm={handleConfirmAnomalyRule}
+      />
 
-      {/* Results Section */}
+      {/* Results Section (Unchanged) */}
       {results && (
         <AnalysisResults 
           results={results} 
@@ -740,7 +1272,7 @@ export default function ThermalAnalysis({ initialBaselineFile = null, initialCan
         />
       )}
 
-      {/* Notes Section */}
+      {/* Notes Section (Unchanged) */}
       {(baselineFile || candidateFile || results) && (
         <div className="bg-white rounded-lg shadow-lg p-6 mt-6">
           <h3 className="text-xl font-bold mb-4 text-gray-800">Notes</h3>
