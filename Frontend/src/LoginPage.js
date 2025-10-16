@@ -17,6 +17,11 @@ export default function LoginPage({ onLogin, onSignUpClick }) {
 
 
 
+
+
+    
+    // Delete following after add login api
+
     
     // Simulate a successful login without making an API call
     setTimeout(() => {
@@ -25,6 +30,9 @@ export default function LoginPage({ onLogin, onSignUpClick }) {
 
 
 
+
+
+    // Delete following after add login Api
     
 
     // const handleSubmit = async (e) => { // Change to async function
@@ -53,6 +61,11 @@ export default function LoginPage({ onLogin, onSignUpClick }) {
     //         setError('An error occurred. Please try again later.');
     //     }
     // };
+
+
+
+
+    
 };
 
   return (

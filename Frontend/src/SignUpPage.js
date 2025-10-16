@@ -20,6 +20,15 @@ export default function SignUpPage({ onSignInClick }) {
 
     // Temporary Bypass Logic
     console.log("Sign-up attempt (backend call commented out):", { name, email, password });
+
+
+
+
+
+
+
+
+    // Delete following after add signUP Api
     
     setTimeout(() => {
         setSuccess('Account created successfully! You can now log in.');
@@ -28,6 +37,15 @@ export default function SignUpPage({ onSignInClick }) {
         setPassword('');
         setConfirmPassword('');
     }, 500);
+
+
+
+
+
+
+
+    // Uncomment following after add signup api
+
 
     // const handleSubmit = async (e) => { // Change to async function
     //     e.preventDefault();
@@ -62,6 +80,11 @@ export default function SignUpPage({ onSignInClick }) {
     //         setError('An error occurred. Please try again later.');
     //     }
     // };
+
+
+
+
+    
 
   };
 
