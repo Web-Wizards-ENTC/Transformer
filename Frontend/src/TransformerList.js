@@ -37,8 +37,15 @@ function TransformerList(props) {
   const types = ['All Types', ...Array.from(new Set(transformers.map(t => t.type)))];
 
 
-  // Filtering logic
-  let filtered = transformers;
+  // Sort by last added time (newest first)
+  let filtered = [...transformers];
+  filtered.sort((a, b) => {
+    // If createdAt exists, sort by it; otherwise, sort by array order
+    if (b.createdAt && a.createdAt) {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    }
+    return 0;
+  });
   if (region !== 'All Regions') {
     filtered = filtered.filter(t => t.region === region);
   }
@@ -56,6 +63,11 @@ function TransformerList(props) {
   const totalPages = Math.ceil(filtered.length / pageSize);
 
   const [modalOpen, setModalOpen] = useState(false);
+  // State to track which row's menu is open
+  const [menuOpenIndex, setMenuOpenIndex] = useState(null);
+  // State for delete confirmation modal
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   // Reset page to 1 when filters/search change
   React.useEffect(() => {
@@ -120,21 +132,50 @@ function TransformerList(props) {
             </thead>
             <tbody>
               {paginated.map((t, i) => (
-                <tr key={t.no} className="border-b hover:bg-indigo-50">
+                <tr key={t.no} className="border-b hover:bg-indigo-50 relative">
                   <td className="py-2 px-4">{t.transformerNo}</td>
                   <td className="py-2 px-4">{t.poleNo}</td>
                   <td className="py-2 px-4">{t.region}</td>
                   <td className="py-2 px-4">{t.type}</td>
-                  <td className="py-2 px-4 text-right">
+                  <td className="py-2 px-4 text-right flex items-center justify-end gap-2">
                     <button 
                       className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700"
                       onClick={() => {
-                        props.setSelectedTransformer(t); // Pass the row transformer
-                        props.setPage('inspectionDetails'); // Go to details page
+                        props.setSelectedTransformer(t);
+                        props.setPage('inspectionDetails');
                       }}
                     >
                       View
                     </button>
+                    <div className="relative">
+                      <button
+                        className="px-2 py-1 text-xl hover:bg-gray-200 rounded"
+                        onClick={() => setMenuOpenIndex(menuOpenIndex === i ? null : i)}
+                        aria-label="Options"
+                      >
+                        &#8942;
+                      </button>
+                      {menuOpenIndex === i && (
+                        <div className="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-10">
+                          <button
+                            className="block w-full text-left px-4 py-2 hover:bg-indigo-50"
+                            onClick={() => {
+                              setMenuOpenIndex(null);
+                              // TODO: Implement edit logic
+                              alert('Edit clicked for ' + t.transformerNo);
+                            }}
+                          >Edit</button>
+                          <button
+                            className="block w-full text-left px-4 py-2 hover:bg-red-50 text-red-600"
+                            onClick={() => {
+                              setMenuOpenIndex(null);
+                              setDeleteTarget(t);
+                              setDeleteModalOpen(true);
+                            }}
+                          >Delete</button>
+                        </div>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -153,6 +194,28 @@ function TransformerList(props) {
           </div>
         </>
       )}
+  {/* Delete Confirmation Modal */}
+  {deleteModalOpen && (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+      <div className="bg-white p-6 rounded shadow w-80">
+        <h2 className="text-lg font-bold mb-4">Delete Transformer</h2>
+        <p className="mb-4">Are you sure you want to delete transformer <span className="font-semibold">{deleteTarget?.transformerNo}</span>?</p>
+        <div className="flex justify-end gap-2">
+          <button
+            className="px-4 py-2 bg-gray-200 rounded"
+            onClick={() => setDeleteModalOpen(false)}
+          >Cancel</button>
+          <button
+            className="px-4 py-2 bg-red-600 text-white rounded"
+            onClick={() => {
+              setDeleteModalOpen(false);
+              // Here you would call the API to delete, but as requested, no API call
+            }}
+          >Yes</button>
+        </div>
+      </div>
+    </div>
+  )}
     </div>
   );
 }
