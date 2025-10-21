@@ -163,4 +163,30 @@ This project consists of two separate components: a backend server (**Spring Boo
   - Inference time may vary for larger image sets.  
 
 
+---
+
+## API Endpoints Used
+
+The frontend calls several backend endpoints. Below is a concise table of the key endpoints used by the React app and a short description of what each does.
+
+| Endpoint | Method | Purpose |
+|---|---:|---|
+| /api/inspections | GET | Fetch list of inspections. |
+| /api/inspections | POST | Create a new inspection record. |
+| /api/transformers | GET | Fetch list of transformers. |
+| /api/transformers | POST | Create a new transformer record. |
+| /api/images | POST | Upload an image (baseline or maintenance) — expects multipart/form-data with `file` and `inspectionId`. Returns image metadata. |
+| /api/images/{imageId} | GET | Download a specific image blob by id (used to display images). |
+| /api/thermal/analyze-upload | POST | Analyze two uploaded images (multipart form fields `baselineFile` and `candidateFile`) — returns ML analysis results (boxes, boxInfo, fault types, etc.). |
+| /api/thermal/analyze-images/{baselineId}/{candidateId} | POST | Analyze images already stored on the server by their IDs. |
+| /api/thermal/analyze-with-baseline/{candidateId} | POST | Analyze a stored candidate image using an uploaded baseline file (multipart with `baselineFile`). |
+| /api/thermal/analyze | POST | Generic analysis endpoint accepting JSON paths and parameters for analysis. |
+| /api/ml/predict | POST | Legacy ML prediction endpoint (JSON body). |
+| /api/ml/predict-upload | POST | Legacy ML prediction from an uploaded image (multipart form). |
+
+Notes:
+- All endpoints are prefixed with `http://localhost:8080` in development (see `Frontend/src/API.js`).
+- The thermal analysis endpoints return a JSON object containing analysis metadata such as `boxes`, `boxInfo`, `faultType`, `confidence`, and `processingTimeMs`.
+
+
 
