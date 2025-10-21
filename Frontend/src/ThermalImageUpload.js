@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { analyzeThermalImagesUpload, uploadTransformerCurrent, uploadTransformerBase } from "./API";
+import { analyzeThermalImagesUpload, uploadTransformerCurrent, uploadTransformerBase, saveAnalysisResult } from "./API";
 // previous notes file removed to avoid showing preloaded notes
 import ThermalAnalysis from "./ThermalAnalysis";
 
@@ -109,7 +109,15 @@ export default function ThermalImageUpload({ inspection }) {
       // Call the ML analysis API with both uploaded files
       const results = await analyzeThermalImagesUpload(baselineImageFile, thermalImage);
       setAnalysisResults(results);
-      
+
+      // Save the analysis result to the backend (optional: pass inspection?.inspectionNo or .id)
+      if (inspection && inspection.inspectionNo) {
+        try {
+          await saveAnalysisResult(results, inspection.inspectionNo);
+        } catch (saveError) {
+          console.error('Failed to save analysis result:', saveError);
+        }
+      }
     } catch (error) {
       console.error('Thermal analysis failed:', error);
       setAnalysisError(`Analysis failed: ${error.message}`);

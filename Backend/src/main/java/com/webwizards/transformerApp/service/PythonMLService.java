@@ -21,7 +21,7 @@ import com.webwizards.transformerApp.dto.MLPredictionResponse;
 public class PythonMLService {
     
     private final ObjectMapper objectMapper;
-    private static final String PYTHON_SCRIPT_DIR = "ml_models/";
+    private static final String PYTHON_SCRIPT_DIR = "Backend/ml_models/";
     private static final String ANALYZE_SCRIPT = "analyze.py";
     
     public PythonMLService(ObjectMapper objectMapper) {
