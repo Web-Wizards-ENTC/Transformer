@@ -110,13 +110,38 @@ export default function ThermalImageUpload({ inspection }) {
       const results = await analyzeThermalImagesUpload(baselineImageFile, thermalImage);
       setAnalysisResults(results);
 
-      // Save the analysis result to the backend (optional: pass inspection?.inspectionNo or .id)
-      if (inspection && inspection.inspectionNo) {
-        try {
-          await saveAnalysisResult(results, inspection.inspectionNo);
-        } catch (saveError) {
-          console.error('Failed to save analysis result:', saveError);
+      // Extract bounding boxes and attach a boxIndexId per box (index-based unique id)
+      try {
+        const boxInfo = (results && results.boxInfo && Array.isArray(results.boxInfo)) ? results.boxInfo : [];
+        const inspectionIdForBoxes = inspection?.inspectionNo || inspection?.id || "";
+        const boxesWithIndex = boxInfo.map((b, idx) => ({
+          // map fields expected by backend/InspectionBox
+          x: b.x ?? 0,
+          y: b.y ?? 0,
+          w: b.w ?? 0,
+          h: b.h ?? 0,
+          areaFrac: b.areaFrac ?? 0.0,
+          aspect: b.aspect ?? 0.0,
+          overlapCenterFrac: b.overlapCenterFrac ?? 0.0,
+          label: b.label ?? "",
+          boxFault: b.boxFault ?? "",
+          // generate unique id according to index inside the json
+          boxIndexId: (inspectionIdForBoxes ? `${inspectionIdForBoxes}_${idx}` : `${idx}`),
+        }));
+
+        // send the original result as well (backend controller expects { inspectionId, result })
+        // but include the transformed boxInfo so backend saves the provided boxIndexId
+        const transformedResult = { ...results, boxInfo: boxesWithIndex };
+
+        if (inspection && (inspection.inspectionNo || inspection.id)) {
+          try {
+            await saveAnalysisResult(transformedResult, inspection.inspectionNo || inspection.id);
+          } catch (saveError) {
+            console.error('Failed to save analysis result (with boxes):', saveError);
+          }
         }
+      } catch (err) {
+        console.error('Error preparing boxes for save:', err);
       }
     } catch (error) {
       console.error('Thermal analysis failed:', error);
@@ -179,7 +204,7 @@ export default function ThermalImageUpload({ inspection }) {
         ...prev,
         [key]: { ...img, zoom: newZoom, offset: newOffset },
       };
-    });
+    }); 
   };
 
   const handleMouseDown = (e, key) => {

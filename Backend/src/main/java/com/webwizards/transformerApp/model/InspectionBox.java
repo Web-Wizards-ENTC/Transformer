@@ -11,7 +11,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "analysis_results")
+@Table(name = "bounding_boxes")
 public class InspectionBox {
 
     @Id
@@ -19,6 +19,9 @@ public class InspectionBox {
     private Long id;
 
     private String inspectionId; // repeated per box
+
+    @Column(name = "box_index_id")
+    private String boxIndexId;
 
     private Integer x;
     private Integer y;
@@ -36,6 +39,9 @@ public class InspectionBox {
     private String label;
 
     private String boxFault;
+
+    public String getBoxIndexId() { return boxIndexId; }
+    public void setBoxIndexId(String boxIndexId) { this.boxIndexId = boxIndexId; }
 
     private Instant createdAt;
 

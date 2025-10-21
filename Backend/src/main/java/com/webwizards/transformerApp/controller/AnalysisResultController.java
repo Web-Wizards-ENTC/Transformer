@@ -36,12 +36,16 @@ public class AnalysisResultController {
                 Object boxInfoObj = resultMap.get("boxInfo");
                 if (boxInfoObj instanceof java.util.List) {
                     java.util.List<?> boxes = (java.util.List<?>) boxInfoObj;
-                    for (Object o : boxes) {
+                    for (int i = 0; i < boxes.size(); i++) {
+                        Object o = boxes.get(i);
                         if (o instanceof Map) {
                             @SuppressWarnings("unchecked")
                             Map<String,Object> bi = (Map<String,Object>) o;
                             InspectionBox ib = new InspectionBox();
                             ib.setInspectionId(inspectionId);
+                            // boxIndexId: use inspectionId + '_' + index if inspectionId present, else just index
+                            String boxIndexId = (inspectionId == null || inspectionId.isBlank()) ? String.valueOf(i) : inspectionId + "_" + i;
+                            ib.setBoxIndexId(boxIndexId);
 
                             Object xv = bi.get("x");
                             ib.setX(xv == null ? 0 : ((Number) xv).intValue());
