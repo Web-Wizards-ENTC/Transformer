@@ -199,10 +199,10 @@ This project consists of two separate components: a backend server (**Spring Boo
   - Current ruleset supports only predefined thresholds.  
   - Inference time may vary for larger image sets.  
 
-**Phase 3:**   
+* **Phase 3:**   
   - Concurrent edits by multiple users may cause synchronization conflicts.  
   - Annotation changes are stored instantly but may experience slight UI refresh delays.    
-  
+
 ---
 
 ## API Endpoints Used
