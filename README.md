@@ -65,6 +65,8 @@ Power utilities can use this system to digitize their thermal inspection workflo
   * Users can add custom notes under the analysis results.
   * Clicking **Confirm** saves the notes to the inspection record for future reference.
 
+---
+
 ### Phase 3  
 
 * **FR3.1: Interactive Annotation Tools**  
@@ -197,7 +199,10 @@ This project consists of two separate components: a backend server (**Spring Boo
   - Current ruleset supports only predefined thresholds.  
   - Inference time may vary for larger image sets.  
 
-
+**Phase 3:**   
+  - Concurrent edits by multiple users may cause synchronization conflicts.  
+  - Annotation changes are stored instantly but may experience slight UI refresh delays.    
+  
 ---
 
 ## API Endpoints Used
