@@ -65,6 +65,41 @@ Power utilities can use this system to digitize their thermal inspection workflo
   * Users can add custom notes under the analysis results.
   * Clicking **Confirm** saves the notes to the inspection record for future reference.
 
+### Phase 3  
+
+* **FR3.1: Interactive Annotation Tools**  
+  * On the anomaly detection view, users can **interactively modify anomaly markers**.  
+  * Supported interactions include:  
+    - **Resize / Reposition** existing markers.  
+    - **Delete** incorrectly detected anomalies.  
+    - **Add new markers** by drawing **bounding boxes** or **polygonal regions**.  
+  * Each annotation must include:  
+    - **Annotation Type:** Added / Edited / Deleted  
+    - **Comments or Notes:** Optional user remarks  
+    - **Timestamp:** Date and time of action  
+    - **User ID:** Identifier of the annotator  
+
+* **FR3.2: Metadata and Annotation Persistence**  
+  * All annotation interactions are **automatically saved** in the backend with the following metadata:  
+    - **User ID**  
+    - **Timestamp**  
+    - **Image ID**  
+    - **Transformer ID**  
+    - **Action Taken**  
+  * The **saved state** is instantly reflected in the **UI**.  
+  * When revisiting the same image, **existing annotations are automatically reloaded** and displayed for continuity.  
+
+* **FR3.3: Feedback Integration for Model Improvement**  
+  * The system maintains a **feedback log** containing both:  
+    - **Original AI-generated detections**  
+    - **Final user-modified annotations**  
+  * The feedback log is used for **model validation** and **retraining** to enhance accuracy.  
+  * Users can **export the feedback log** in **JSON** or **CSV** format, including:  
+    - **Image ID**  
+    - **Model-Predicted Anomalies**  
+    - **Final Accepted Annotations**  
+    - **Annotator Metadata** (User ID, Timestamp, etc.)  
+  * **User-modified annotations** directly contribute to improving the model’s detection performance over time.  
 
 ---
 
