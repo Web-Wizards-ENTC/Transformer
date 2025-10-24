@@ -65,6 +65,43 @@ Power utilities can use this system to digitize their thermal inspection workflo
   * Users can add custom notes under the analysis results.
   * Clicking **Confirm** saves the notes to the inspection record for future reference.
 
+---
+
+### Phase 3  
+
+* **FR3.1: Interactive Annotation Tools**  
+  * On the anomaly detection view, users can **interactively modify anomaly markers**.  
+  * Supported interactions include:  
+    - **Resize / Reposition** existing markers.  
+    - **Delete** incorrectly detected anomalies.  
+    - **Add new markers** by drawing **bounding boxes** or **polygonal regions**.  
+  * Each annotation must include:  
+    - **Annotation Type:** Added / Edited / Deleted  
+    - **Comments or Notes:** Optional user remarks  
+    - **Timestamp:** Date and time of action  
+    - **User ID:** Identifier of the annotator  
+
+* **FR3.2: Metadata and Annotation Persistence**  
+  * All annotation interactions are **automatically saved** in the backend with the following metadata:  
+    - **User ID**  
+    - **Timestamp**  
+    - **Image ID**  
+    - **Transformer ID**  
+    - **Action Taken**  
+  * The **saved state** is instantly reflected in the **UI**.  
+  * When revisiting the same image, **existing annotations are automatically reloaded** and displayed for continuity.  
+
+* **FR3.3: Feedback Integration for Model Improvement**  
+  * The system maintains a **feedback log** containing both:  
+    - **Original AI-generated detections**  
+    - **Final user-modified annotations**  
+  * The feedback log is used for **model validation** and **retraining** to enhance accuracy.  
+  * Users can **export the feedback log** in **JSON** or **CSV** format, including:  
+    - **Image ID**  
+    - **Model-Predicted Anomalies**  
+    - **Final Accepted Annotations**  
+    - **Annotator Metadata** (User ID, Timestamp, etc.)  
+  * **User-modified annotations** directly contribute to improving the model’s detection performance over time.  
 
 ---
 
@@ -136,18 +173,18 @@ This project consists of two separate components: a backend server (**Spring Boo
 ---
 
 ### Phase 2
-1. Upload both **baseline** and **maintenance** images.  
+* Upload both **baseline** and **maintenance** images.  
 ![](Images/5.jpeg)
 ![](Images/6.jpeg)
-2. The system redirects to the **Thermal Analysis Page**.  
+* The system redirects to the **Thermal Analysis Page**.  
 ![](Images/7.jpeg)
-3. Review detected anomalies (or "Normal" if none found).  
+* Review detected anomalies (or "Normal" if none found).  
 ![](Images/8.jpeg)
-4. Use **zoom, drag, reset** for image navigation.  
-5. Open **Error Ruleset** to configure thresholds.  
+* Use **zoom, drag, reset** for image navigation.  
+* Open **Error Ruleset** to configure thresholds.  
 ![](Images/9.png)
-6. Review analysis results with metadata.  
-7. Add **notes** and save with **Confirm**.  
+* Review analysis results with metadata.  
+* Add **notes** and save with **Confirm**.  
 ![](Images/10.png)
 
 ---
@@ -162,6 +199,9 @@ This project consists of two separate components: a backend server (**Spring Boo
   - Current ruleset supports only predefined thresholds.  
   - Inference time may vary for larger image sets.  
 
+* **Phase 3:**   
+  - Concurrent edits by multiple users may cause synchronization conflicts.  
+  - Annotation changes are stored instantly but may experience slight UI refresh delays.    
 
 ---
 
@@ -171,22 +211,32 @@ The frontend calls several backend endpoints. Below is a concise table of the ke
 
 | Endpoint | Method | Purpose |
 |---|---:|---|
-| /api/inspections | GET | Fetch list of inspections. |
-| /api/inspections | POST | Create a new inspection record. |
 | /api/transformers | GET | Fetch list of transformers. |
 | /api/transformers | POST | Create a new transformer record. |
+| /api/inspections | GET | Fetch list of inspections. |
+| /api/inspections | POST | Create a new inspection record. |
 | /api/images | POST | Upload an image (baseline or maintenance) — expects multipart/form-data with `file` and `inspectionId`. Returns image metadata. |
-| /api/images/{imageId} | GET | Download a specific image blob by id (used to display images). |
-| /api/thermal/analyze-upload | POST | Analyze two uploaded images (multipart form fields `baselineFile` and `candidateFile`) — returns ML analysis results (boxes, boxInfo, fault types, etc.). |
+| /api/images/{id} | GET | Download a specific image blob by id (used to display images). |
+| /api/ml/predict | POST | ML prediction endpoint (JSON body). |
+| /api/ml/predict-image/{imageId} | POST | ML prediction for a stored image by ID. |
+| /api/ml/predict-upload | POST | ML prediction from an uploaded image (multipart form). |
+| /api/thermal/analyze | POST | Analyze two images (JSON body with paths). |
 | /api/thermal/analyze-images/{baselineId}/{candidateId} | POST | Analyze images already stored on the server by their IDs. |
+| /api/thermal/analyze-upload | POST | Analyze two uploaded images (multipart form fields `baselineFile` and `candidateFile`). |
 | /api/thermal/analyze-with-baseline/{candidateId} | POST | Analyze a stored candidate image using an uploaded baseline file (multipart with `baselineFile`). |
-| /api/thermal/analyze | POST | Generic analysis endpoint accepting JSON paths and parameters for analysis. |
-| /api/ml/predict | POST | Legacy ML prediction endpoint (JSON body). |
-| /api/ml/predict-upload | POST | Legacy ML prediction from an uploaded image (multipart form). |
+| /api/anomalies/insert | POST | Insert anomaly records (array of anomalies in JSON body). |
+| /api/anomalies/delete | DELETE | Hard delete anomaly by inspection number and index. |
+| /api/anomalies/delete | PATCH | Soft delete anomaly by inspection number and index. |
+| /api/anomalies/{inspectionNumber} | GET | Get all anomalies for a given inspection number. |
+| /api/analysis-results | POST | Save analysis result boxes for an inspection. |
+
 
 Notes:
 - All endpoints are prefixed with `http://localhost:8080` in development (see `Frontend/src/API.js`).
-- The thermal analysis endpoints return a JSON object containing analysis metadata such as `boxes`, `boxInfo`, `faultType`, `confidence`, and `processingTimeMs`.
+- The thermal analysis endpoints return a JSON object containing analysis metadata. Typical fields include:
+  - `boxes`, `boxInfo`, `faultType`, `confidence`, `processingTimeMs`
+  - Additional fields: `prob`, `histDistance`, `dv95`, `warmFraction`, `imageWidth`, `imageHeight`, `annotated`, `prediction`, `metadata`
+  - On error, responses include `success: false` and an `errorMessage` field.
 
 
 
