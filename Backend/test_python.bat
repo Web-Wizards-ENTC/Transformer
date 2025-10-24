@@ -1,4 +1,6 @@
 @echo off
+rem Ensure the script runs relative to the batch file's directory
+pushd "%~dp0"
 echo Testing Python installation...
 python --version
 if %errorlevel% neq 0 (
@@ -20,3 +22,4 @@ cd ml_models
 python analyze.py
 echo.
 echo Exit code: %errorlevel%
+popd
