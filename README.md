@@ -173,18 +173,18 @@ This project consists of two separate components: a backend server (**Spring Boo
 ---
 
 ### Phase 2
-1. Upload both **baseline** and **maintenance** images.  
+* Upload both **baseline** and **maintenance** images.  
 ![](Images/5.jpeg)
 ![](Images/6.jpeg)
-2. The system redirects to the **Thermal Analysis Page**.  
+* The system redirects to the **Thermal Analysis Page**.  
 ![](Images/7.jpeg)
-3. Review detected anomalies (or "Normal" if none found).  
+* Review detected anomalies (or "Normal" if none found).  
 ![](Images/8.jpeg)
-4. Use **zoom, drag, reset** for image navigation.  
-5. Open **Error Ruleset** to configure thresholds.  
+* Use **zoom, drag, reset** for image navigation.  
+* Open **Error Ruleset** to configure thresholds.  
 ![](Images/9.png)
-6. Review analysis results with metadata.  
-7. Add **notes** and save with **Confirm**.  
+* Review analysis results with metadata.  
+* Add **notes** and save with **Confirm**.  
 ![](Images/10.png)
 
 ---
