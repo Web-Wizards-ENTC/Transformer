@@ -7,6 +7,8 @@ This project is a web-based system for managing transformers and their associate
 
 - **Phase 1** focused on building the foundational components: an admin interface for managing transformer records, an image upload mechanism, and a system for categorizing baseline images by environmental conditions.  
 - **Phase 2** extends the system with **AI-based anomaly detection** capabilities, allowing automated comparison between baseline and maintenance images, highlighting potential issues, and presenting results in an interactive analysis page.  
+- **Phase 3** added **interactive annotation tools**, allowing engineers to manually review, edit, and provide feedback for model improvement.  
+- **Phase 4** enhances the system with **maintenance record generation and engineer input**, enabling full inspection documentation and historical tracking.
 
 Power utilities can use this system to digitize their thermal inspection workflow, providing a strong basis for automated anomaly detection and predictive maintenance planning.
 
@@ -105,6 +107,35 @@ Power utilities can use this system to digitize their thermal inspection workflo
 
 ---
 
+### Phase 4  
+
+* **FR4.1: Generate Maintenance Record Form**  
+  * For each transformer with a new maintenance image and completed analysis, automatically **generate a maintenance record form**.  
+  * The record includes:  
+    - Transformer metadata (ID, location, capacity)  
+    - Inspection timestamp  
+    - Embedded or thumbnail thermal image with anomaly markers (from Phase 3)  
+    - List of detected/annotated anomalies with metadata (type, location, details)  
+
+* **FR4.2: Editable Engineer Input Fields**  
+  * Authorized users (e.g., maintenance engineers) can **add and edit details**, including:  
+    - Inspector name  
+    - Transformer status (**OK / Needs Maintenance / Urgent Attention**)  
+    - Electrical readings (voltage, current, etc.)  
+    - Recommended actions  
+    - Additional remarks  
+  * Supports text fields, dropdowns, and date pickers.  
+  * Editable fields are **visually separated** from system-generated content.  
+
+* **FR4.3: Save and Retrieve Completed Records**  
+  * Completed records can be **saved to the database**, linked with the corresponding transformer and timestamp.  
+  * Each record supports:  
+    - Easy retrieval and filtering  
+    - Export for reporting or documentation  
+  * Includes a **record history viewer** showing all past maintenance forms per transformer.  
+
+---
+
 ## Setup Instructions
 
 This project consists of two separate components: a backend server (**Spring Boot**) and a frontend application (**React**).
@@ -187,6 +218,18 @@ This project consists of two separate components: a backend server (**Spring Boo
 * Add **notes** and save with **Confirm**.  
 ![](Images/10.png)
 
+
+### Phase 3
+
+* Modify or add anomaly annotations.
+* Review and export annotation logs for model feedback.
+
+### Phase 4
+
+* Generate maintenance records automatically from analyzed data.
+* Engineers can fill in inspection details and save records.
+* Access historical maintenance forms per transformer
+
 ---
 
 ## Known Limitations / Issues
@@ -202,6 +245,11 @@ This project consists of two separate components: a backend server (**Spring Boo
 * **Phase 3:**   
   - Concurrent edits by multiple users may cause synchronization conflicts.  
   - Annotation changes are stored instantly but may experience slight UI refresh delays.    
+
+* **Phase 4:** 
+  - Role-based access control not fully enforced for form editing.
+  - Export and report formatting still under development.
+  - Record history filtering may slow down with very large datasets.
 
 ---
 
