@@ -1,10 +1,10 @@
 package com.webwizards.transformerApp.service;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -21,7 +21,7 @@ import com.webwizards.transformerApp.dto.MLPredictionResponse;
 public class PythonMLService {
     
     private final ObjectMapper objectMapper;
-    private static final String PYTHON_SCRIPT_DIR = "ml_models/";
+    private static final String PYTHON_SCRIPT_DIR = "Backend/ml_models/";
     private static final String ANALYZE_SCRIPT = "analyze.py";
     
     public PythonMLService(ObjectMapper objectMapper) {
@@ -58,17 +58,37 @@ public class PythonMLService {
                 return MLPredictionResponse.error("Candidate image file not found: " + request.getCandidateImagePath());
             }
             
-            // Build the Python command for thermal analysis
-            // Execute the Python script
+            // Resolve the analyze.py script path robustly to avoid duplicated folders
             ProcessBuilder processBuilder = new ProcessBuilder();
+            Path cwd = Paths.get(System.getProperty("user.dir"));
+
+            // Try a few candidate locations (project may be run with different working directories)
+            Path scriptPath = cwd.resolve("ml_models").resolve(ANALYZE_SCRIPT);
+            if (!Files.exists(scriptPath)) {
+                scriptPath = cwd.resolve("Backend").resolve("ml_models").resolve(ANALYZE_SCRIPT);
+            }
+            if (!Files.exists(scriptPath)) {
+                scriptPath = cwd.resolve("ML Model").resolve(ANALYZE_SCRIPT);
+            }
+
+            if (!Files.exists(scriptPath)) {
+                return MLPredictionResponse.error("Analyze script not found. Checked: " +
+                    cwd.resolve("ml_models").resolve(ANALYZE_SCRIPT).toString() + ", " +
+                    cwd.resolve("Backend").resolve("ml_models").resolve(ANALYZE_SCRIPT).toString() + ", " +
+                    cwd.resolve("ML Model").resolve(ANALYZE_SCRIPT).toString());
+            }
+
+            // Use absolute path when invoking Python to avoid relative-path duplication
             processBuilder.command(
                 "python",
-                PYTHON_SCRIPT_DIR + ANALYZE_SCRIPT,
+                scriptPath.toAbsolutePath().toString(),
                 request.getBaselineImagePath(),
                 request.getCandidateImagePath()
             );
-            processBuilder.directory(new File(System.getProperty("user.dir")));
-            
+
+            // Keep the process working directory at the application's cwd
+            processBuilder.directory(cwd.toFile());
+
             Process process = processBuilder.start();
             
             // Read the output
