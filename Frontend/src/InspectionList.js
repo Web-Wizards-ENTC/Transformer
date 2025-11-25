@@ -121,6 +121,16 @@ function InspectionList(props) {
                   </span>
                 </td>
                 <td className="py-2 px-4 text-right">
+                  <button 
+                    className="text-indigo-600 px-4 py-1 rounded hover:bg-indigo-100 border border-indigo-600 mr-2"
+                    onClick={() => {
+                      props.setSelectedInspection(t); // Set the inspection object
+                      props.setPage('digitalForm'); // Navigate to the new page
+                    }}
+                  >
+                    Digital Form
+                  </button>
+                  {/* 👆 END OF NEW CODE 👆 */}
                   <button
                     className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700"
                   >
