@@ -1,18 +1,25 @@
 import React, { useRef, useState, useEffect } from "react";
-import errorsData from "./errors.json"; // existing errors file
-import notesData from "./notes.json"; // new notes file
+import { analyzeThermalImagesUpload, uploadTransformerCurrent, uploadTransformerBase, saveAnalysisResult } from "./API";
+// previous notes file removed to avoid showing preloaded notes
+import ThermalAnalysis from "./ThermalAnalysis";
 
 export default function ThermalImageUpload({ inspection }) {
   const [uploading, setUploading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [weather, setWeather] = useState("Sunny");
   const [thermalImage, setThermalImage] = useState(null);
+  const [baselineImageFile, setBaselineImageFile] = useState(null);
   const [showComparison, setShowComparison] = useState(false);
   const [baselineImage, setBaselineImage] = useState(null);
   const [baselineDateTime, setBaselineDateTime] = useState("");
   const [currentDateTime, setCurrentDateTime] = useState("");
   const [tool, setTool] = useState(null);
-  const [showRuleset, setShowRuleset] = useState(false); // 🔹 for popup
+  const [showRuleset, setShowRuleset] = useState(false);
+  
+  // ML Analysis Results
+  const [analysisResults, setAnalysisResults] = useState(null);
+  const [analysisError, setAnalysisError] = useState(null);
 
   const [rule2Enabled, setRule2Enabled] = useState(false);
   const [rule3Enabled, setRule3Enabled] = useState(false);
@@ -23,41 +30,125 @@ export default function ThermalImageUpload({ inspection }) {
     current: { zoom: 1, offset: { x: 0, y: 0 }, dragging: false, startPos: { x: 0, y: 0 } },
   });
 
-  const inputRef = useRef(null);
+  const baselineInputRef = useRef(null);
+  const thermalInputRef = useRef(null);
   const uploadInterval = useRef(null);
 
-  // Notes
-  const [notes, setNotes] = useState([]);
-  const [newNote, setNewNote] = useState("");
-  const [showPlaceholder, setShowPlaceholder] = useState(true);
 
   useEffect(() => {
-    setBaselineImage("/Transformer-Base.jpg");
+    // Remove default baseline image setup since user will upload it
     const now = new Date();
     setBaselineDateTime(`${now.toLocaleDateString()} ${now.toLocaleTimeString()}`);
-    setNotes(notesData);
   }, []);
 
-  const handleFileChange = (event) => {
+  const handleBaselineUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
+    
+    setBaselineImageFile(file);
+    setBaselineImage(URL.createObjectURL(file));
+    const now = new Date();
+    setBaselineDateTime(`${now.toLocaleDateString()} ${now.toLocaleTimeString()}`);
+  };
+
+  const handleThermalUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    setThermalImage(file);
+    const now = new Date();
+    setCurrentDateTime(`${now.toLocaleDateString()} ${now.toLocaleTimeString()}`);
+    
+    // Check if both images are ready for comparison
+    if (baselineImageFile) {
+      startComparison();
+    }
+  };
+
+  const startComparison = async () => {
+    if (!baselineImageFile || !thermalImage) {
+      setAnalysisError("Both baseline and thermal images are required");
+      return;
+    }
+
     setUploading(true);
     setProgress(0);
-    setThermalImage(file);
 
+    // Simulate upload progress
     uploadInterval.current = setInterval(() => {
       setProgress((prev) => {
-        if (prev >= 100) {
+        const next = Math.min(prev + 2, 100);
+        if (next >= 100) {
           clearInterval(uploadInterval.current);
-          setUploading(false);
-          setShowComparison(true);
-          const now = new Date();
-          setCurrentDateTime(`${now.toLocaleDateString()} ${now.toLocaleTimeString()}`);
-          return 100;
+
+          // leave progress at 100 briefly so users can see the completed bar,
+          // then switch views and start analysis after a short pause (500ms)
+          setTimeout(() => {
+            setUploading(false);
+            setShowComparison(true);
+            // Start ML analysis after showing comparison
+            performThermalAnalysis();
+          }, 500);
         }
-        return prev + 2;
+        return next;
       });
-    }, 50);
+    }, 100);
+  };
+
+  const performThermalAnalysis = async () => {
+    if (!baselineImageFile || !thermalImage) {
+      setAnalysisError("Both baseline and thermal images are required for analysis");
+      return;
+    }
+
+    setAnalyzing(true);
+    setAnalysisError(null);
+    setAnalysisResults(null);
+
+    try {
+      // Call the ML analysis API with both uploaded files
+      const results = await analyzeThermalImagesUpload(baselineImageFile, thermalImage);
+      setAnalysisResults(results);
+
+      // Extract bounding boxes and attach a boxIndexId per box (index-based unique id)
+      try {
+        const boxInfo = (results && results.boxInfo && Array.isArray(results.boxInfo)) ? results.boxInfo : [];
+        const inspectionIdForBoxes = inspection?.inspectionNo || inspection?.id || "";
+        const boxesWithIndex = boxInfo.map((b, idx) => ({
+          // map fields expected by backend/InspectionBox
+          x: b.x ?? 0,
+          y: b.y ?? 0,
+          w: b.w ?? 0,
+          h: b.h ?? 0,
+          areaFrac: b.areaFrac ?? 0.0,
+          aspect: b.aspect ?? 0.0,
+          overlapCenterFrac: b.overlapCenterFrac ?? 0.0,
+          label: b.label ?? "",
+          boxFault: b.boxFault ?? "",
+          // generate unique id according to index inside the json
+          boxIndexId: (inspectionIdForBoxes ? `${inspectionIdForBoxes}_${idx}` : `${idx}`),
+        }));
+
+        // send the original result as well (backend controller expects { inspectionId, result })
+        // but include the transformed boxInfo so backend saves the provided boxIndexId
+        const transformedResult = { ...results, boxInfo: boxesWithIndex };
+
+        if (inspection && (inspection.inspectionNo || inspection.id)) {
+          try {
+            await saveAnalysisResult(transformedResult, inspection.inspectionNo || inspection.id);
+          } catch (saveError) {
+            console.error('Failed to save analysis result (with boxes):', saveError);
+          }
+        }
+      } catch (err) {
+        console.error('Error preparing boxes for save:', err);
+      }
+    } catch (error) {
+      console.error('Thermal analysis failed:', error);
+      setAnalysisError(`Analysis failed: ${error.message}`);
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   const handleCancelUpload = () => {
@@ -65,7 +156,13 @@ export default function ThermalImageUpload({ inspection }) {
     setUploading(false);
     setProgress(0);
     setThermalImage(null);
+    setBaselineImageFile(null);
+    setBaselineImage(null);
     setCurrentDateTime("");
+    setBaselineDateTime("");
+    setAnalysisResults(null);
+    setAnalysisError(null);
+    setShowComparison(false);
   };
 
   const handleReset = () => {
@@ -74,6 +171,19 @@ export default function ThermalImageUpload({ inspection }) {
       current: { zoom: 1, offset: { x: 0, y: 0 }, dragging: false, startPos: { x: 0, y: 0 } },
     });
     setTool(null);
+  };
+
+  const handleStartOver = () => {
+    setShowComparison(false);
+    setThermalImage(null);
+    setBaselineImageFile(null);
+    setBaselineImage(null);
+    setAnalysisResults(null);
+    setAnalysisError(null);
+    setAnalyzing(false);
+    setCurrentDateTime("");
+    setBaselineDateTime("");
+    handleReset();
   };
 
   const handleImageClick = (e, key) => {
@@ -94,7 +204,7 @@ export default function ThermalImageUpload({ inspection }) {
         ...prev,
         [key]: { ...img, zoom: newZoom, offset: newOffset },
       };
-    });
+    }); 
   };
 
   const handleMouseDown = (e, key) => {
@@ -137,29 +247,8 @@ export default function ThermalImageUpload({ inspection }) {
     };
   };
 
-  const errorTypeMapping = {
-    1: "Loose Joint",
-    2: "Loose Joint",
-    3: "Point Overload",
-    4: "Point Overload",
-    5: "Full Wire Overload",
-    6: "Unknown",
-  };
-
   // Notes Handlers
-  const handleConfirmNote = () => {
-    if (!newNote.trim()) return;
-    const nextId = notes.length > 0 ? notes[notes.length - 1].id + 1 : 1;
-    const updatedNotes = [...notes, { id: nextId, text: newNote }];
-    setNotes(updatedNotes);
-    setNewNote("");
-    setShowPlaceholder(true);
-  };
-
-  const handleCancelNote = () => {
-    setNewNote("");
-    setShowPlaceholder(true);
-  };
+  // note handlers removed
 
   // 🔥 Legend Component (outside image)
 // 🔥 Legend Component (outside image)
@@ -197,14 +286,14 @@ export default function ThermalImageUpload({ inspection }) {
 
   return (
     <>
-      {/* Upload */}
+      {/* Upload Interface */}
       {!uploading && !showComparison && (
         <div
-          className="bg-white rounded-2xl shadow p-8 w-1/2 min-w-[400px] flex flex-col gap-6 transition-all duration-300"
-          style={{ alignItems: "flex-start", minHeight: "500px" }}
+          className="bg-white rounded-2xl shadow p-8 w-full max-w-4xl flex flex-col gap-6 transition-all duration-300"
+          style={{ minHeight: "500px" }}
         >
           <div className="flex items-center justify-between w-full mb-2">
-            <h3 className="text-xl font-bold text-gray-800">Thermal Image</h3>
+            <h3 className="text-xl font-bold text-gray-800">Thermal Image Analysis</h3>
             <span
               className={`px-3 py-1 rounded text-xs font-semibold ${
                 inspection?.status === "Pending"
@@ -215,58 +304,155 @@ export default function ThermalImageUpload({ inspection }) {
               {inspection?.status === "Pending" ? "Pending" : "In progress"}
             </span>
           </div>
+          
           <p className="text-gray-600 mb-4">
-            Upload a thermal image of the transformer to identify potential issues.
+            Upload both baseline and thermal images of the transformer to identify potential issues.
           </p>
-          <label className="text-base font-semibold text-gray-800 mb-2 block">
-            Weather Condition
-          </label>
-          <select
-            value={weather}
-            onChange={(e) => setWeather(e.target.value)}
-            className="border rounded px-4 py-2 mb-6 w-full text-gray-700 bg-gray-50"
-          >
-            <option value="Sunny">Sunny</option>
-            <option value="Cloudy">Cloudy</option>
-            <option value="Rainy">Rainy</option>
-          </select>
+
+          {/* Weather Condition */}
+          <div className="mb-4">
+            <label className="text-base font-semibold text-gray-800 mb-2 block">
+              Weather Condition
+            </label>
+            <select
+              value={weather}
+              onChange={(e) => setWeather(e.target.value)}
+              className="border rounded px-4 py-2 w-full text-gray-700 bg-gray-50"
+            >
+              <option value="Sunny">Sunny</option>
+              <option value="Cloudy">Cloudy</option>
+              <option value="Rainy">Rainy</option>
+            </select>
+          </div>
+
+          {/* Image Upload Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Baseline Image Upload */}
+            <div>
+              <label className="text-base font-semibold text-gray-800 mb-2 block">
+                Baseline Image
+              </label>
+              <div 
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
+                  baselineImageFile ? 'border-green-400 bg-green-50' : 'border-gray-300 hover:border-gray-400'
+                }`}
+                onClick={() => baselineInputRef.current?.click()}
+              >
+                {baselineImageFile ? (
+                  <div className="space-y-2">
+                    <div className="text-green-600">
+                      <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <p className="text-sm font-medium text-green-800">{baselineImageFile.name}</p>
+                    <p className="text-xs text-green-600">Baseline image uploaded</p>
+                  </div>
+                ) : (
+                  <div className="text-gray-600">
+                    <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                      <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <p className="mt-2 text-sm">Click to upload baseline image</p>
+                  </div>
+                )}
+              </div>
+              <input 
+                type="file" 
+                ref={baselineInputRef} 
+                className="hidden" 
+                accept="image/*"
+                onChange={handleBaselineUpload}
+              />
+            </div>
+
+            {/* Thermal Image Upload */}
+            <div>
+              <label className="text-base font-semibold text-gray-800 mb-2 block">
+                Thermal Image
+              </label>
+              <div 
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer ${
+                  thermalImage ? 'border-green-400 bg-green-50' : 'border-gray-300 hover:border-gray-400'
+                }`}
+                onClick={() => thermalInputRef.current?.click()}
+              >
+                {thermalImage ? (
+                  <div className="space-y-2">
+                    <div className="text-green-600">
+                      <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <p className="text-sm font-medium text-green-800">{thermalImage.name}</p>
+                    <p className="text-xs text-green-600">Thermal image uploaded</p>
+                  </div>
+                ) : (
+                  <div className="text-gray-600">
+                    <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                      <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <p className="mt-2 text-sm">Click to upload thermal image</p>
+                  </div>
+                )}
+              </div>
+              <input 
+                type="file" 
+                ref={thermalInputRef} 
+                className="hidden" 
+                accept="image/*"
+                onChange={handleThermalUpload}
+              />
+            </div>
+          </div>
+
+          {/* Analysis Button */}
           <button
-            className="w-full bg-indigo-700 text-white px-4 py-3 rounded-lg font-semibold text-base hover:bg-indigo-800 transition"
-            onClick={() => inputRef.current.click()}
+            className={`w-full px-4 py-3 rounded-lg font-semibold text-base transition ${
+              baselineImageFile && thermalImage
+                ? 'bg-indigo-700 text-white hover:bg-indigo-800'
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            }`}
+            onClick={startComparison}
+            disabled={!baselineImageFile || !thermalImage}
           >
-            Upload thermal Image
+            {baselineImageFile && thermalImage ? 'Start Thermal Analysis' : 'Upload Both Images to Continue'}
           </button>
-          <input type="file" ref={inputRef} className="hidden" onChange={handleFileChange} />
         </div>
       )}
 
       {/* Uploading */}
       {uploading && (
         <div
-          className="bg-white rounded-2xl shadow p-8 w-1/2 min-w-[400px] flex flex-col gap-6 transition-all duration-300"
-          style={{ alignItems: "flex-start", minHeight: "500px" }}
+          className="bg-white rounded-2xl shadow p-8 w-full max-w-2xl flex flex-col gap-6 transition-all duration-300"
+          style={{ minHeight: "400px" }}
         >
           <div className="flex flex-col items-center justify-center h-full w-full">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Thermal image uploading.</h3>
-            <p className="text-gray-600 mb-4">
-              Thermal image is being uploaded and reviewed.
+            <h3 className="text-xl font-bold text-gray-800 mb-4">Processing Thermal Analysis</h3>
+            <p className="text-gray-600 mb-6 text-center">
+              Uploading and preparing images for thermal comparison analysis.
             </p>
+            
+            <div className="w-full max-w-md">
+              <div className="mb-2 flex justify-between items-center">
+                <span className="text-sm text-gray-700 font-medium">Upload Progress</span>
+                <span className="text-sm text-gray-700 font-medium">{progress}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden mb-6">
+                <div
+                  className="bg-indigo-700 h-4 transition-all duration-200"
+                  style={{ width: `${progress}%` }}
+                ></div>
+              </div>
+            </div>
+            
+            <button
+              className="bg-white text-gray-600 px-6 py-2 rounded border border-gray-400 hover:bg-gray-100"
+              onClick={handleCancelUpload}
+            >
+              Cancel
+            </button>
           </div>
-          <div className="mb-2 flex justify-end w-full">
-            <span className="text-sm text-gray-700 font-medium">{progress}%</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden mb-4">
-            <div
-              className="bg-indigo-700 h-4 transition-all duration-200"
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
-          <button
-            className="bg-white text-gray-600 px-4 py-2 rounded border border-gray-400 hover:bg-gray-100 w-auto"
-            onClick={handleCancelUpload}
-          >
-            Cancel
-          </button>
         </div>
       )}
 
@@ -276,235 +462,16 @@ export default function ThermalImageUpload({ inspection }) {
           className="bg-white rounded-2xl shadow p-8 w-full flex flex-col gap-6 transition-all duration-300"
           style={{ minHeight: "500px" }}
         >
-          <div className="flex flex-row gap-6">
-            <div className="flex-1 flex flex-col gap-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">
-                Thermal Image Comparison
-              </h3>
-              <div className="grid grid-cols-2 gap-8 w-full">
-                {/* Baseline */}
-                <div className="relative w-full flex flex-col items-center">
-                  <div className="flex items-center">
-                    <div
-                      className="relative w-full max-w-md h-72 flex items-center justify-center overflow-hidden bg-gray-100 rounded-lg"
-                      onClick={(e) => handleImageClick(e, "baseline")}
-                      onMouseDown={(e) => handleMouseDown(e, "baseline")}
-                      onMouseMove={(e) => handleMouseMove(e, "baseline")}
-                      onMouseUp={() => handleMouseUp("baseline")}
-                      onMouseLeave={() => handleMouseUp("baseline")}
-                    >
-                      <img
-                        src={baselineImage}
-                        alt="Baseline"
-                        className="w-full h-72 object-cover"
-                        style={getImageStyle("baseline")}
-                      />
-                      <span className="absolute top-0 left-0 mt-4 ml-4 bg-indigo-700 text-white text-sm px-3 py-1 rounded shadow">
-                        Baseline
-                      </span>
-                    </div>
-                    <Legend />
-                  </div>
-                  <span className="text-xs text-gray-500 mt-1">
-                    {baselineDateTime}
-                  </span>
-                </div>
-
-                {/* Current */}
-                <div className="relative w-full flex flex-col items-center">
-                  <div className="flex items-center">
-                    <div
-                      className="relative w-full max-w-md h-72 flex items-center justify-center overflow-hidden bg-gray-100 rounded-lg"
-                      onClick={(e) => handleImageClick(e, "current")}
-                      onMouseDown={(e) => handleMouseDown(e, "current")}
-                      onMouseMove={(e) => handleMouseMove(e, "current")}
-                      onMouseUp={() => handleMouseUp("current")}
-                      onMouseLeave={() => handleMouseUp("current")}
-                    >
-                      <img
-                        src={
-                          thermalImage
-                            ? URL.createObjectURL(thermalImage)
-                            : "/Transformer-Current.jpg"
-                        }
-                        alt="Current"
-                        className="w-full h-72 object-cover"
-                        style={getImageStyle("current")}
-                      />
-
-                      {/* Error boxes */}
-                      {errorsData.map((err, index) => {
-                        const [x, y] = err.position;
-                        const { zoom, offset } = imageStates["current"];
-                        const baseBoxSize = err.anomalySize * 25;
-                        const boxSize = baseBoxSize * zoom;
-
-                        const severityColors = {
-                          1: "#3B82F6",
-                          2: "#60A5FA",
-                          3: "#FACC15",
-                          4: "#F97316",
-                          5: "#DC2626",
-                        };
-                        const color = severityColors[err.SeverityScore] || "#6B7280";
-
-                        const left = x * zoom + offset.x - boxSize / 2;
-                        const top = y * zoom + offset.y - boxSize / 2;
-
-                        return (
-                          <div
-                            key={err.id}
-                            className="absolute"
-                            style={{
-                              width: boxSize,
-                              height: boxSize,
-                              left,
-                              top,
-                              border: `2px solid ${color}`,
-                              boxSizing: "border-box",
-                            }}
-                          >
-                            <div
-                              className="absolute flex items-center justify-center rounded-full text-white font-bold text-xs"
-                              style={{
-                                width: 6 * zoom,
-                                height: 6 * zoom,
-                                top: -3 * zoom,
-                                left: -3 * zoom,
-                                backgroundColor: color,
-                              }}
-                            >
-                              {index + 1}
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      <span className="absolute top-0 left-0 mt-4 ml-4 bg-indigo-700 text-white text-sm px-3 py-1 rounded shadow">
-                        Current
-                      </span>
-                    </div>
-                    <Legend />
-                  </div>
-                  <span className="text-xs text-gray-500 mt-1">
-                    {currentDateTime}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Tools */}
-            <div className="w-40 flex flex-col gap-4 items-start border-l pl-4">
-              <h4 className="text-base font-semibold text-gray-700">
-                Annotation Tools
-              </h4>
-              <button
-                className="flex items-center gap-2 px-3 py-2 bg-gray-100 rounded hover:bg-gray-200 w-full"
-                onClick={handleReset}
-              >
-                🔄 Reset
-              </button>
-              <button
-                className={`flex items-center gap-2 px-3 py-2 rounded w-full ${
-                  tool === "drag"
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-100 hover:bg-gray-200"
-                }`}
-                onClick={() => setTool("drag")}
-              >
-                ✋ Drag
-              </button>
-              <button
-                className={`flex items-center gap-2 px-3 py-2 rounded w-full ${
-                  tool === "zoom"
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-100 hover:bg-gray-200"
-                }`}
-                onClick={() => setTool("zoom")}
-              >
-                🔍 Zoom
-              </button>
-
-              {/* 🔹 New Error Ruleset Button */}
-              <button
-                className="flex items-center gap-2 px-3 py-2 bg-indigo-700 text-white rounded hover:bg-indigo-800 w-full"
-                onClick={() => setShowRuleset(true)}
-              >
-                ⚙ Error Ruleset
-              </button>
-            </div>
-          </div>
-
-          {/* Errors */}
-          <div className="mt-6">
-            <h3 className="text-xl font-bold text-gray-800 mb-4">Errors</h3>
-            <div className="flex flex-col gap-3">
-              {errorsData.map((err) => (
-                <div
-                  key={err.id}
-                  className="bg-gray-200 p-3 rounded flex justify-between items-center"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="bg-red-500 text-white px-2 py-1 rounded font-bold">
-                      {err.id}
-                    </div>
-                    <div className="flex flex-col text-sm text-gray-700">
-                      <span>{err.dateTime}</span>
-                      <span>{err.name}</span>
-                    </div>
-                  </div>
-                  <div className="text-sm font-semibold text-gray-800">
-                    {errorTypeMapping[err.type]}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Notes */}
-          {notes.length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">Notes</h3>
-              <div className="flex flex-col gap-3">
-                {notes.map((note) => (
-                  <div
-                    key={note.id}
-                    className="bg-gray-100 p-3 rounded text-gray-700 text-sm"
-                  >
-                    <span className="font-semibold mr-2">Note {note.id}:</span>
-                    {note.text}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Add Note Box */}
-          <div className="mt-4">
-            <textarea
-              value={newNote}
-              onChange={(e) => setNewNote(e.target.value)}
-              onFocus={() => setShowPlaceholder(false)}
-              onBlur={() => !newNote && setShowPlaceholder(true)}
-              placeholder={showPlaceholder ? "Type here to add notes..." : ""}
-              className="w-full border rounded p-3 text-sm text-gray-700 bg-gray-50 resize-none"
-              rows={3}
+          {/* Render the shared ThermalAnalysis component so the Transformer > View flow matches the sidebar UI */}
+          <div className="w-full">
+            <ThermalAnalysis
+              initialBaselineFile={baselineImageFile}
+              initialCandidateFile={thermalImage}
+              autoStart={true}
             />
-            <div className="flex gap-3 mt-3">
-              <button
-                className="bg-indigo-700 text-white px-4 py-2 rounded-lg font-semibold text-sm hover:bg-indigo-800"
-                onClick={handleConfirmNote}
-              >
-                Confirm
-              </button>
-              <button
-                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-semibold text-sm hover:bg-gray-200"
-                onClick={handleCancelNote}
-              >
-                Cancel
-              </button>
-            </div>
           </div>
+
+          {/* Notes removed from bottom per request - the ThermalAnalysis component already contains notes section */}
         </div>
       )}
 
