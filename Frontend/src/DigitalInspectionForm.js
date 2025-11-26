@@ -1,11 +1,20 @@
 import React, { useState, useEffect } from "react";
 // Assuming you have an API function to fetch detailed transformer data
-import { getTransformers } from "./API"; 
+import { 
+  getTransformers,
+  getGeneralRecord,
+  getMaintenanceRecord,
+  getWorkDatasheet,
+  saveGeneralRecord,
+  saveMaintenanceRecord,
+  saveWorkDatasheet,
+} from "./API"; 
 import { FaCalendarAlt, FaClock } from 'react-icons/fa';
 
 export default function DigitalInspectionForm({ inspection, onSave, onCancel }) {
   const [transformer, setTransformer] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [form, setForm] = useState({
     // Initial values populated from the inspection object
@@ -43,16 +52,212 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
     fetchTransformerDetails();
   }, [inspection.transformerNo]);
 
+  // Load existing subforms for this inspection, if any
+  useEffect(() => {
+    async function loadExistingForms() {
+      if (!inspection?.id) return;
+      try {
+        const [general, maintenance, work] = await Promise.all([
+          getGeneralRecord(inspection.id).catch(() => null),
+          getMaintenanceRecord(inspection.id).catch(() => null),
+          getWorkDatasheet(inspection.id).catch(() => null),
+        ]);
+
+        setForm(prev => ({
+          ...prev,
+          // general
+          date: general?.date ?? prev.date,
+          time: general?.time ?? prev.time,
+          inspectorName: general?.inspectorName ?? prev.inspectorName,
+          transformerStatus: general?.transformerStatus ?? prev.transformerStatus,
+          recommendedAction: general?.recommendedAction ?? prev.recommendedAction,
+          additionalRemarks: general?.additionalRemarks ?? prev.additionalRemarks,
+          voltageR: general?.voltageR ?? prev.voltageR,
+          voltageY: general?.voltageY ?? prev.voltageY,
+          voltageB: general?.voltageB ?? prev.voltageB,
+          currentR: general?.currentR ?? prev.currentR,
+          currentY: general?.currentY ?? prev.currentY,
+          currentB: general?.currentB ?? prev.currentB,
+          voltageR2: general?.voltageR2 ?? prev.voltageR2,
+          voltageY2: general?.voltageY2 ?? prev.voltageY2,
+          voltageB2: general?.voltageB2 ?? prev.voltageB2,
+          currentR2: general?.currentR2 ?? prev.currentR2,
+          currentY2: general?.currentY2 ?? prev.currentY2,
+          currentB2: general?.currentB2 ?? prev.currentB2,
+          // maintenance
+          startTime: maintenance?.startTime ?? prev.startTime,
+          completionTime: maintenance?.completionTime ?? prev.completionTime,
+          supervisedBy: maintenance?.supervisedBy ?? prev.supervisedBy,
+          techI: maintenance?.techI ?? prev.techI,
+          techII: maintenance?.techII ?? prev.techII,
+          techIII: maintenance?.techIII ?? prev.techIII,
+          helpers: maintenance?.helpers ?? prev.helpers,
+          inspectedBy: maintenance?.inspectedBy ?? prev.inspectedBy,
+          inspectedDate: maintenance?.inspectedDate ?? prev.inspectedDate,
+          rectifiedBy: maintenance?.rectifiedBy ?? prev.rectifiedBy,
+          rectifiedDate: maintenance?.rectifiedDate ?? prev.rectifiedDate,
+          reInspectedBy: maintenance?.reInspectedBy ?? prev.reInspectedBy,
+          reInspectedDate: maintenance?.reInspectedDate ?? prev.reInspectedDate,
+          css: maintenance?.css ?? prev.css,
+          cssDate: maintenance?.cssDate ?? prev.cssDate,
+          allSpotsCorrect: maintenance?.allSpotsCorrect ?? prev.allSpotsCorrect,
+          css2: maintenance?.css2 ?? prev.css2,
+          css2Date: maintenance?.css2Date ?? prev.css2Date,
+          // work datasheet
+          gangLeader: work?.gangLeader ?? prev.gangLeader,
+          workDate: work?.workDate ?? prev.workDate,
+          jobStartedTime: work?.jobStartedTime ?? prev.jobStartedTime,
+          serialNo: work?.serialNo ?? prev.serialNo,
+          kva: work?.kva ?? prev.kva,
+          make: work?.make ?? prev.make,
+          tapPosition: work?.tapPosition ?? prev.tapPosition,
+          txCtRation: work?.txCtRation ?? prev.txCtRation,
+          manufactureYear: work?.manufactureYear ?? prev.manufactureYear,
+          earthResistance: work?.earthResistance ?? prev.earthResistance,
+          neutral: work?.neutral ?? prev.neutral,
+          surgeBody: work?.surgeBody ?? prev.surgeBody,
+          fdsF1: work?.fdsF1 ?? prev.fdsF1,
+          fdsF1Value: work?.fdsF1Value ?? prev.fdsF1Value,
+          fdsF2: work?.fdsF2 ?? prev.fdsF2,
+          fdsF2Value: work?.fdsF2Value ?? prev.fdsF2Value,
+          fdsF3: work?.fdsF3 ?? prev.fdsF3,
+          fdsF3Value: work?.fdsF3Value ?? prev.fdsF3Value,
+          fdsF4: work?.fdsF4 ?? prev.fdsF4,
+          fdsF4Value: work?.fdsF4Value ?? prev.fdsF4Value,
+          fdsF5: work?.fdsF5 ?? prev.fdsF5,
+          fdsF5Value: work?.fdsF5Value ?? prev.fdsF5Value,
+          jobCompletedTime: work?.jobCompletedTime ?? prev.jobCompletedTime,
+          workNotes: work?.workNotes ?? prev.workNotes,
+          material_B112: work?.material_B112 ?? prev.material_B112,
+          material_B244: work?.material_B244 ?? prev.material_B244,
+          material_B712: work?.material_B712 ?? prev.material_B712,
+          material_B815: work?.material_B815 ?? prev.material_B815,
+          material_C113: work?.material_C113 ?? prev.material_C113,
+          material_G332: work?.material_G332 ?? prev.material_G332,
+          material_G354: work?.material_G354 ?? prev.material_G354,
+          material_G360: work?.material_G360 ?? prev.material_G360,
+          material_G373A: work?.material_G373A ?? prev.material_G373A,
+          material_G374: work?.material_G374 ?? prev.material_G374,
+        }));
+      } catch (err) {
+        console.error("Error loading digital inspection subforms", err);
+      }
+    }
+
+    loadExistingForms();
+  }, [inspection?.id]);
+
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
   
   // Handlers for Save and Edit buttons
-  const handleSave = () => {
-    // In a real application, you would call an API to save the form data.
-    // For now, it just calls the onSave prop, which handles navigation.
-    console.log("Saving form data:", form);
-    onSave();
+  const handleSave = async () => {
+    if (!inspection?.id) {
+      console.error("Cannot save digital form: inspection.id is missing");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const inspectionId = inspection.id;
+
+      // Prepare payloads for each subform
+      const generalPayload = {
+        inspectionId,
+        date: form.date,
+        time: form.time,
+        inspectorName: form.inspectorName,
+        transformerStatus: form.transformerStatus,
+        recommendedAction: form.recommendedAction,
+        additionalRemarks: form.additionalRemarks,
+        voltageR: form.voltageR,
+        voltageY: form.voltageY,
+        voltageB: form.voltageB,
+        currentR: form.currentR,
+        currentY: form.currentY,
+        currentB: form.currentB,
+        voltageR2: form.voltageR2,
+        voltageY2: form.voltageY2,
+        voltageB2: form.voltageB2,
+        currentR2: form.currentR2,
+        currentY2: form.currentY2,
+        currentB2: form.currentB2,
+      };
+
+      const maintenancePayload = {
+        inspectionId,
+        startTime: form.startTime,
+        completionTime: form.completionTime,
+        supervisedBy: form.supervisedBy,
+        techI: form.techI,
+        techII: form.techII,
+        techIII: form.techIII,
+        helpers: form.helpers,
+        inspectedBy: form.inspectedBy,
+        inspectedDate: form.inspectedDate,
+        rectifiedBy: form.rectifiedBy,
+        rectifiedDate: form.rectifiedDate,
+        reInspectedBy: form.reInspectedBy,
+        reInspectedDate: form.reInspectedDate,
+        css: form.css,
+        cssDate: form.cssDate,
+        allSpotsCorrect: form.allSpotsCorrect,
+        css2: form.css2,
+        css2Date: form.css2Date,
+      };
+
+      const workPayload = {
+        inspectionId,
+        gangLeader: form.gangLeader,
+        workDate: form.workDate,
+        jobStartedTime: form.jobStartedTime,
+        serialNo: form.serialNo,
+        kva: form.kva,
+        make: form.make,
+        tapPosition: form.tapPosition,
+        txCtRation: form.txCtRation,
+        manufactureYear: form.manufactureYear,
+        earthResistance: form.earthResistance,
+        neutral: form.neutral,
+        surgeBody: form.surgeBody,
+        fdsF1: form.fdsF1,
+        fdsF1Value: form.fdsF1Value,
+        fdsF2: form.fdsF2,
+        fdsF2Value: form.fdsF2Value,
+        fdsF3: form.fdsF3,
+        fdsF3Value: form.fdsF3Value,
+        fdsF4: form.fdsF4,
+        fdsF4Value: form.fdsF4Value,
+        fdsF5: form.fdsF5,
+        fdsF5Value: form.fdsF5Value,
+        jobCompletedTime: form.jobCompletedTime,
+        workNotes: form.workNotes,
+        material_B112: form.material_B112,
+        material_B244: form.material_B244,
+        material_B712: form.material_B712,
+        material_B815: form.material_B815,
+        material_C113: form.material_C113,
+        material_G332: form.material_G332,
+        material_G354: form.material_G354,
+        material_G360: form.material_G360,
+        material_G373A: form.material_G373A,
+        material_G374: form.material_G374,
+      };
+
+      await Promise.all([
+        saveGeneralRecord(generalPayload),
+        saveMaintenanceRecord(maintenancePayload),
+        saveWorkDatasheet(workPayload),
+      ]);
+
+      if (onSave) onSave();
+    } catch (err) {
+      console.error("Failed to save digital inspection subforms", err);
+      alert("Failed to save digital inspection form. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -564,8 +769,9 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
             <button
               className="px-6 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700"
               onClick={handleSave}
+              disabled={saving}
             >
-              Save
+              {saving ? "Saving..." : "Save"}
             </button>
           </div>
         </div>

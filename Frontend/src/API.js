@@ -331,4 +331,75 @@ export async function predictMLFromUpload(file, modelType = "default") {
 	}
 }
 
+// ========== DIGITAL INSPECTION SUBFORMS ========== 
+
+export async function saveGeneralRecord(payload) {
+	const endpoint = "http://localhost:8080/api/digital/general";
+	const response = await fetch(endpoint, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify(payload),
+	});
+	if (!response.ok) {
+		throw new Error("Failed to save general record");
+	}
+	return response.json();
+}
+
+export async function getGeneralRecord(inspectionId) {
+	const endpoint = `http://localhost:8080/api/digital/general/${inspectionId}`;
+	const response = await fetch(endpoint);
+	if (response.status === 404) return null;
+	if (!response.ok) {
+		throw new Error("Failed to load general record");
+	}
+	return response.json();
+}
+
+export async function saveMaintenanceRecord(payload) {
+	const endpoint = "http://localhost:8080/api/digital/maintenance";
+	const response = await fetch(endpoint, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify(payload),
+	});
+	if (!response.ok) {
+		throw new Error("Failed to save maintenance record");
+	}
+	return response.json();
+}
+
+export async function getMaintenanceRecord(inspectionId) {
+	const endpoint = `http://localhost:8080/api/digital/maintenance/${inspectionId}`;
+	const response = await fetch(endpoint);
+	if (response.status === 404) return null;
+	if (!response.ok) {
+		throw new Error("Failed to load maintenance record");
+	}
+	return response.json();
+}
+
+export async function saveWorkDatasheet(payload) {
+	const endpoint = "http://localhost:8080/api/digital/work-datasheet";
+	const response = await fetch(endpoint, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify(payload),
+	});
+	if (!response.ok) {
+		throw new Error("Failed to save work datasheet");
+	}
+	return response.json();
+}
+
+export async function getWorkDatasheet(inspectionId) {
+	const endpoint = `http://localhost:8080/api/digital/work-datasheet/${inspectionId}`;
+	const response = await fetch(endpoint);
+	if (response.status === 404) return null;
+	if (!response.ok) {
+		throw new Error("Failed to load work datasheet");
+	}
+	return response.json();
+}
+
 
