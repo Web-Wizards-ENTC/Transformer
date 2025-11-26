@@ -20,15 +20,24 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.webwizards.transformerApp.dto.GeneralRecordRequest;
 import com.webwizards.transformerApp.dto.InspectionRequest;
 import com.webwizards.transformerApp.dto.MLPredictionRequest;
 import com.webwizards.transformerApp.dto.MLPredictionResponse;
+import com.webwizards.transformerApp.dto.MaintenanceRecordRequest;
+import com.webwizards.transformerApp.dto.WorkDatasheetRequest;
+import com.webwizards.transformerApp.model.GeneralRecord;
 import com.webwizards.transformerApp.model.Inspection;
 import com.webwizards.transformerApp.model.InspectionImage;
+import com.webwizards.transformerApp.model.MaintenanceRecord;
 import com.webwizards.transformerApp.model.Transformer;
+import com.webwizards.transformerApp.model.WorkDatasheet;
+import com.webwizards.transformerApp.repository.GeneralRecordRepository;
 import com.webwizards.transformerApp.repository.InspectionImageRepository;
 import com.webwizards.transformerApp.repository.InspectionRepository;
+import com.webwizards.transformerApp.repository.MaintenanceRecordRepository;
 import com.webwizards.transformerApp.repository.TransformerRepository;
+import com.webwizards.transformerApp.repository.WorkDatasheetRepository;
 import com.webwizards.transformerApp.service.PythonMLService;
 // import java.nio.file.Paths;
 
@@ -43,13 +52,25 @@ public class MainController {
     private final InspectionRepository inspectionRepo;
     private final InspectionImageRepository inspectionImageRepo;
     private final PythonMLService pythonMLService;
+    private final GeneralRecordRepository generalRecordRepo;
+    private final MaintenanceRecordRepository maintenanceRecordRepo;
+    private final WorkDatasheetRepository workDatasheetRepo;
 
-    public MainController(TransformerRepository transformerRepo, InspectionRepository inspectionRepo, 
-                         InspectionImageRepository inspectionImageRepo, PythonMLService pythonMLService) {
+    public MainController(
+            TransformerRepository transformerRepo,
+            InspectionRepository inspectionRepo,
+            InspectionImageRepository inspectionImageRepo,
+            PythonMLService pythonMLService,
+            GeneralRecordRepository generalRecordRepo,
+            MaintenanceRecordRepository maintenanceRecordRepo,
+            WorkDatasheetRepository workDatasheetRepo) {
         this.transformerRepo = transformerRepo;
         this.inspectionRepo = inspectionRepo;
         this.inspectionImageRepo = inspectionImageRepo;
         this.pythonMLService = pythonMLService;
+        this.generalRecordRepo = generalRecordRepo;
+        this.maintenanceRecordRepo = maintenanceRecordRepo;
+        this.workDatasheetRepo = workDatasheetRepo;
     }
 
     // ----------- TRANSFORMERS -------------
@@ -82,6 +103,156 @@ public class MainController {
     public List<Inspection> getInspections() {
         return inspectionRepo.findAll();
     }
+
+        // ----------- DIGITAL FORM - GENERAL RECORD -------------
+
+        @PostMapping("/digital/general")
+        public GeneralRecord saveGeneralRecord(@RequestBody GeneralRecordRequest request) {
+        Inspection inspection = inspectionRepo.findById(request.getInspectionId())
+            .orElseThrow(() -> new RuntimeException("Inspection not found"));
+
+        GeneralRecord record = generalRecordRepo.findByInspectionId(inspection.getId())
+            .orElseGet(GeneralRecord::new);
+
+        record.setInspection(inspection);
+        record.setDate(request.getDate());
+        record.setTime(request.getTime());
+        record.setInspectorName(request.getInspectorName());
+        record.setTransformerStatus(request.getTransformerStatus());
+        record.setRecommendedAction(request.getRecommendedAction());
+        record.setAdditionalRemarks(request.getAdditionalRemarks());
+
+        record.setVoltageR(request.getVoltageR());
+        record.setVoltageY(request.getVoltageY());
+        record.setVoltageB(request.getVoltageB());
+        record.setCurrentR(request.getCurrentR());
+        record.setCurrentY(request.getCurrentY());
+        record.setCurrentB(request.getCurrentB());
+
+        record.setVoltageR2(request.getVoltageR2());
+        record.setVoltageY2(request.getVoltageY2());
+        record.setVoltageB2(request.getVoltageB2());
+        record.setCurrentR2(request.getCurrentR2());
+        record.setCurrentY2(request.getCurrentY2());
+        record.setCurrentB2(request.getCurrentB2());
+
+        return generalRecordRepo.save(record);
+        }
+
+        @GetMapping("/digital/general/{inspectionId}")
+        public ResponseEntity<GeneralRecord> getGeneralRecord(@PathVariable Long inspectionId) {
+        return generalRecordRepo.findByInspectionId(inspectionId)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+        }
+
+        // ----------- DIGITAL FORM - MAINTENANCE RECORD -------------
+
+        @PostMapping("/digital/maintenance")
+        public MaintenanceRecord saveMaintenanceRecord(@RequestBody MaintenanceRecordRequest request) {
+        Inspection inspection = inspectionRepo.findById(request.getInspectionId())
+            .orElseThrow(() -> new RuntimeException("Inspection not found"));
+
+        MaintenanceRecord record = maintenanceRecordRepo.findByInspectionId(inspection.getId())
+            .orElseGet(MaintenanceRecord::new);
+
+        record.setInspection(inspection);
+        record.setStartTime(request.getStartTime());
+        record.setCompletionTime(request.getCompletionTime());
+        record.setSupervisedBy(request.getSupervisedBy());
+
+        record.setTechI(request.getTechI());
+        record.setTechII(request.getTechII());
+        record.setTechIII(request.getTechIII());
+        record.setHelpers(request.getHelpers());
+
+        record.setInspectedBy(request.getInspectedBy());
+        record.setInspectedDate(request.getInspectedDate());
+
+        record.setRectifiedBy(request.getRectifiedBy());
+        record.setRectifiedDate(request.getRectifiedDate());
+
+        record.setReInspectedBy(request.getReInspectedBy());
+        record.setReInspectedDate(request.getReInspectedDate());
+
+        record.setCss(request.getCss());
+        record.setCssDate(request.getCssDate());
+
+        record.setAllSpotsCorrect(request.getAllSpotsCorrect());
+        record.setCss2(request.getCss2());
+        record.setCss2Date(request.getCss2Date());
+
+        return maintenanceRecordRepo.save(record);
+        }
+
+        @GetMapping("/digital/maintenance/{inspectionId}")
+        public ResponseEntity<MaintenanceRecord> getMaintenanceRecord(@PathVariable Long inspectionId) {
+        return maintenanceRecordRepo.findByInspectionId(inspectionId)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+        }
+
+        // ----------- DIGITAL FORM - WORK DATASHEET -------------
+
+        @PostMapping("/digital/work-datasheet")
+        public WorkDatasheet saveWorkDatasheet(@RequestBody WorkDatasheetRequest request) {
+        Inspection inspection = inspectionRepo.findById(request.getInspectionId())
+            .orElseThrow(() -> new RuntimeException("Inspection not found"));
+
+        WorkDatasheet record = workDatasheetRepo.findByInspectionId(inspection.getId())
+            .orElseGet(WorkDatasheet::new);
+
+        record.setInspection(inspection);
+        record.setGangLeader(request.getGangLeader());
+        record.setWorkDate(request.getWorkDate());
+        record.setJobStartedTime(request.getJobStartedTime());
+
+        record.setSerialNo(request.getSerialNo());
+        record.setKva(request.getKva());
+        record.setMake(request.getMake());
+
+        record.setTapPosition(request.getTapPosition());
+        record.setTxCtRation(request.getTxCtRation());
+        record.setManufactureYear(request.getManufactureYear());
+
+        record.setEarthResistance(request.getEarthResistance());
+        record.setNeutral(request.getNeutral());
+        record.setSurgeBody(request.getSurgeBody());
+
+        record.setFdsF1(request.getFdsF1());
+        record.setFdsF1Value(request.getFdsF1Value());
+        record.setFdsF2(request.getFdsF2());
+        record.setFdsF2Value(request.getFdsF2Value());
+        record.setFdsF3(request.getFdsF3());
+        record.setFdsF3Value(request.getFdsF3Value());
+        record.setFdsF4(request.getFdsF4());
+        record.setFdsF4Value(request.getFdsF4Value());
+        record.setFdsF5(request.getFdsF5());
+        record.setFdsF5Value(request.getFdsF5Value());
+
+        record.setJobCompletedTime(request.getJobCompletedTime());
+        record.setWorkNotes(request.getWorkNotes());
+
+        record.setMaterial_B112(request.getMaterial_B112());
+        record.setMaterial_B244(request.getMaterial_B244());
+        record.setMaterial_B712(request.getMaterial_B712());
+        record.setMaterial_B815(request.getMaterial_B815());
+        record.setMaterial_C113(request.getMaterial_C113());
+        record.setMaterial_G332(request.getMaterial_G332());
+        record.setMaterial_G354(request.getMaterial_G354());
+        record.setMaterial_G360(request.getMaterial_G360());
+        record.setMaterial_G373A(request.getMaterial_G373A());
+        record.setMaterial_G374(request.getMaterial_G374());
+
+        return workDatasheetRepo.save(record);
+        }
+
+        @GetMapping("/digital/work-datasheet/{inspectionId}")
+        public ResponseEntity<WorkDatasheet> getWorkDatasheet(@PathVariable Long inspectionId) {
+        return workDatasheetRepo.findByInspectionId(inspectionId)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+        }
 
     @PostMapping("/images")
     public InspectionImage uploadImage(
