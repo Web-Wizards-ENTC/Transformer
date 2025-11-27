@@ -78,6 +78,16 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
     },
   });
 
+  // NEW: state to show past-forms page
+  const [showPastForms, setShowPastForms] = useState(false);
+
+  // Dummy past forms data (date, time, id)
+  const [pastForms] = useState([
+    { id: "p1", date: "2025-11-01", time: "09:12", inspector: "A-110" },
+    { id: "p2", date: "2025-10-18", time: "14:05", inspector: "T-112" },
+    { id: "p3", date: "2025-09-30", time: "08:45", inspector: "P-453" },
+  ]);
+
   // Fetch Transformer Details (for non-editable fields)
   useEffect(() => {
     async function fetchTransformerDetails() {
@@ -122,12 +132,98 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
     }
   };
 
+  // NEW: open the past-forms page (keeps minimal)
+  const handleViewPastForms = () => {
+    setShowPastForms(true);
+  };
+
+  // NEW: view single past form (for now logs and could open details)
+  const handleView = (row) => {
+    console.log("View row:", row);
+    // Replace with navigation/modal as needed later
+  };
+
+  // NEW: download a single row as JSON file (dummy download)
+  const handleDownload = (row) => {
+    const dataStr = JSON.stringify(row, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `inspection-${row.id}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) {
     return <div className="p-8 text-center">Loading transformer details...</div>;
   }
 
   // Fallback for non-editable fields if transformer details are missing
   const { region = 'N/A', transformerNo = inspection.transformerNo, poleNo = 'N/A', locationDetails = 'N/A' } = transformer || {};
+
+  // NEW: Past forms page UI
+  if (showPastForms) {
+    return (
+      <div className="p-8 font-sans bg-gray-50 min-h-screen">
+        <div className="max-w-5xl mx-auto bg-white rounded-lg shadow-xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">Past Forms</h1>
+              <p className="text-sm text-gray-600">Transformer: {transformerNo} • Pole: {poleNo} • Region: {region}</p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <button
+                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                onClick={() => setShowPastForms(false)}
+              >
+                Back to Form
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-indigo-50">
+                  <th className="px-6 py-3 text-sm font-semibold text-indigo-700">Date</th>
+                  <th className="px-6 py-3 text-sm font-semibold text-indigo-700">Time</th>
+                  <th className="px-6 py-3 text-sm font-semibold text-indigo-700">Inspector</th>
+                  <th className="px-6 py-3 text-sm font-semibold text-indigo-700 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pastForms.map((row) => (
+                  <tr key={row.id} className="border-b">
+                    <td className="px-6 py-4 text-sm text-gray-700">{row.date}</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">{row.time}</td>
+                    <td className="px-6 py-4 text-sm text-gray-700">{row.inspector}</td>
+                    <td className="px-6 py-4 text-sm text-right space-x-2">
+                      <button
+                        className="inline-block px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                        onClick={() => handleView(row)}
+                      >
+                        View
+                      </button>
+                      <button
+                        className="inline-block px-4 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                        onClick={() => handleDownload(row)}
+                      >
+                        Download
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 font-sans bg-gray-50 min-h-screen">
@@ -692,6 +788,15 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
             >
               Edit
             </button>
+
+            {/* ← View Past Forms button (only addition) */}
+            <button
+              className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+              onClick={handleViewPastForms}
+            >
+              View Past Forms
+            </button>
+
             <button
               className="px-6 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700"
               onClick={handleSave}
