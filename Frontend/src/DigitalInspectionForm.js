@@ -20,6 +20,25 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
     // Add fields for second inspection readings as per PDF [cite: 100]
     voltageR2: '', voltageY2: '', voltageB2: '',
     currentR2: '', currentY2: '', currentB2: '',
+    // Maintenance Record fields
+    startTime: '',
+    completionTime: '',
+    supervisedBy: '',
+    techI: '',
+    techII: '',
+    techIII: '',
+    helpers: '',
+    inspectedBy: '',
+    inspectedDate: '',
+    rectifiedBy: '',
+    rectifiedDate: '',
+    reInspectedBy: '',
+    reInspectedDate: '',
+    css1: '',
+    css1Date: '',
+    allSpotsCorrect: false,
+    css2: '',
+    css2Date: '',
   });
 
   // Fetch Transformer Details (for non-editable fields)
@@ -196,9 +215,168 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
         )}
 
         {activeTab === 'maintenance' && (
-          <div className="p-6 bg-gray-50 rounded-lg">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Maintenance Record</h2>
-            <p className="text-gray-600">Maintenance record content will be displayed here.</p>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-700 mb-6">Maintenance Record</h2>
+            
+            {/* Start Time, Completion Time, Supervised BY */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <InputField
+                label="Start Time"
+                type="time"
+                value={form.startTime}
+                onChange={(e) => handleChange("startTime", e.target.value)}
+                placeholder="--:-- --"
+                icon={FaClock}
+              />
+              <InputField
+                label="Completion Time"
+                type="time"
+                value={form.completionTime}
+                onChange={(e) => handleChange("completionTime", e.target.value)}
+                placeholder="--:-- --"
+                icon={FaClock}
+              />
+              <InputField
+                label="Supervised BY"
+                value={form.supervisedBy}
+                onChange={(e) => handleChange("supervisedBy", e.target.value)}
+                placeholder="e.g., A-221"
+              />
+            </div>
+
+            {/* Gang Composition */}
+            <div className="mb-6 p-6 bg-gray-50 rounded-lg border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Gang Composition</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <InputField
+                  label="Tech I"
+                  value={form.techI}
+                  onChange={(e) => handleChange("techI", e.target.value)}
+                  placeholder="e.g., T-112"
+                />
+                <InputField
+                  label="Tech II"
+                  value={form.techII}
+                  onChange={(e) => handleChange("techII", e.target.value)}
+                  placeholder="e.g., A-110"
+                />
+                <InputField
+                  label="Tech III"
+                  value={form.techIII}
+                  onChange={(e) => handleChange("techIII", e.target.value)}
+                  placeholder="e.g., A-110"
+                />
+                <InputField
+                  label="Helpers"
+                  value={form.helpers}
+                  onChange={(e) => handleChange("helpers", e.target.value)}
+                  placeholder="e.g., H-245"
+                />
+              </div>
+            </div>
+
+            {/* Inspected By & Date */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <SelectField
+                label="Inspected By"
+                value={form.inspectedBy}
+                onChange={(e) => handleChange("inspectedBy", e.target.value)}
+                options={['', 'A-110', 'T-112', 'P-453', 'Other']}
+              />
+              <InputField
+                label="Date"
+                type="date"
+                value={form.inspectedDate}
+                onChange={(e) => handleChange("inspectedDate", e.target.value)}
+                placeholder="mm/dd/yyyy"
+                icon={FaCalendarAlt}
+              />
+            </div>
+
+            {/* Rectified By & Date */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <SelectField
+                label="Rectified By"
+                value={form.rectifiedBy}
+                onChange={(e) => handleChange("rectifiedBy", e.target.value)}
+                options={['', 'P-453', 'A-110', 'T-112', 'Other']}
+              />
+              <InputField
+                label="Date"
+                type="date"
+                value={form.rectifiedDate}
+                onChange={(e) => handleChange("rectifiedDate", e.target.value)}
+                placeholder="mm/dd/yyyy"
+                icon={FaCalendarAlt}
+              />
+            </div>
+
+            {/* Re Inspected By & Date */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <SelectField
+                label="Re Inspected By"
+                value={form.reInspectedBy}
+                onChange={(e) => handleChange("reInspectedBy", e.target.value)}
+                options={['', 'A-110', 'T-112', 'P-453', 'Other']}
+              />
+              <InputField
+                label="Date"
+                type="date"
+                value={form.reInspectedDate}
+                onChange={(e) => handleChange("reInspectedDate", e.target.value)}
+                placeholder="mm/dd/yyyy"
+                icon={FaCalendarAlt}
+              />
+            </div>
+
+            {/* CSS & Date */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <SelectField
+                label="CSS"
+                value={form.css1}
+                onChange={(e) => handleChange("css1", e.target.value)}
+                options={['', 'A-110', 'T-112', 'P-453', 'Other']}
+              />
+              <InputField
+                label="Date"
+                type="date"
+                value={form.css1Date}
+                onChange={(e) => handleChange("css1Date", e.target.value)}
+                placeholder="mm/dd/yyyy"
+                icon={FaCalendarAlt}
+              />
+            </div>
+
+            {/* Checkbox: All Identified spots were corrected */}
+            <div className="mb-6">
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.allSpotsCorrect}
+                  onChange={(e) => handleChange("allSpotsCorrect", e.target.checked)}
+                  className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                />
+                <span className="text-sm font-medium text-gray-700">All Identified spots were corrected</span>
+              </label>
+            </div>
+
+            {/* CSS & Date (Second) */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <SelectField
+                label="CSS"
+                value={form.css2}
+                onChange={(e) => handleChange("css2", e.target.value)}
+                options={['', 'A-110', 'T-112', 'P-453', 'Other']}
+              />
+              <InputField
+                label="Date"
+                type="date"
+                value={form.css2Date}
+                onChange={(e) => handleChange("css2Date", e.target.value)}
+                placeholder="mm/dd/yyyy"
+                icon={FaCalendarAlt}
+              />
+            </div>
           </div>
         )}
 
