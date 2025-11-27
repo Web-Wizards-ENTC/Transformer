@@ -34,13 +34,25 @@ public class PdfGenerationService {
             PdfDocument pdfDoc = new PdfDocument(writer);
             Document document = new Document(pdfDoc);
 
-            // Main Header
-            Paragraph mainHeader = new Paragraph("COMPLETE TRANSFORMER INSPECTION REPORT")
-                    .setFontSize(20)
+            // Modern header with better styling
+            Paragraph mainHeader = new Paragraph("Digital Inspection Form")
+                    .setFontSize(24)
                     .setBold()
-                    .setTextAlignment(TextAlignment.CENTER)
-                    .setMarginBottom(30);
+                    .setTextAlignment(TextAlignment.LEFT)
+                    .setMarginBottom(5);
             document.add(mainHeader);
+            
+            // Subheader
+            Paragraph subHeader = new Paragraph("Complete Transformer Inspection Report")
+                    .setFontSize(12)
+                    .setFontColor(new DeviceRgb(107, 114, 128))
+                    .setTextAlignment(TextAlignment.LEFT)
+                    .setMarginBottom(20);
+            document.add(subHeader);
+            
+            // Add thin separator line
+            document.add(new Paragraph("\n").setMarginBottom(0));
+            document.add(createSeparatorLine());
 
             // ========== SECTION 1: GENERAL RECORD ==========
             addGeneralRecordSection(document, generalRecord);
@@ -73,16 +85,18 @@ public class PdfGenerationService {
     }
 
     private void addWorkDataSheetSection(Document document, WorkDataSheet workData) {
-        // Section Header
-        Paragraph sectionHeader = new Paragraph("WORK DATA SHEET")
-                .setFontSize(16)
+        // Section Header - Modern style
+        Paragraph sectionHeader = new Paragraph("3. Work - Data Sheet")
+                .setFontSize(18)
                 .setBold()
-                .setBackgroundColor(new DeviceRgb(41, 128, 185))
-                .setFontColor(ColorConstants.WHITE)
-                .setPadding(10)
-                .setTextAlignment(TextAlignment.CENTER)
-                .setMarginBottom(15);
+                .setFontColor(new DeviceRgb(37, 99, 235))
+                .setMarginBottom(5)
+                .setMarginTop(15);
         document.add(sectionHeader);
+        
+        // Blue underline
+        document.add(createColoredLine(new DeviceRgb(37, 99, 235)));
+        document.add(new Paragraph("\n").setMarginBottom(10));
 
         // Date and Time Section
         Table dateTimeTable = new Table(UnitValue.createPercentArray(new float[]{1, 1}));
@@ -213,16 +227,18 @@ public class PdfGenerationService {
     }
 
     private void addGeneralRecordSection(Document document, GeneralRecord generalRecord) {
-        // Section Header
-        Paragraph sectionHeader = new Paragraph("GENERAL INSPECTION RECORD")
-                .setFontSize(16)
+        // Section Header - Modern style matching UI
+        Paragraph sectionHeader = new Paragraph("1. General Record")
+                .setFontSize(18)
                 .setBold()
-                .setBackgroundColor(new DeviceRgb(46, 204, 113))
-                .setFontColor(ColorConstants.WHITE)
-                .setPadding(10)
-                .setTextAlignment(TextAlignment.CENTER)
-                .setMarginBottom(15);
+                .setFontColor(new DeviceRgb(37, 99, 235))
+                .setMarginBottom(5)
+                .setMarginTop(15);
         document.add(sectionHeader);
+        
+        // Blue underline
+        document.add(createColoredLine(new DeviceRgb(37, 99, 235)));
+        document.add(new Paragraph("\n").setMarginBottom(10));
 
         // Date and Time Section
         Table dateTimeTable = new Table(UnitValue.createPercentArray(new float[]{1, 1}));
@@ -341,16 +357,18 @@ public class PdfGenerationService {
     }
 
     private void addMaintenanceRecordSection(Document document, MaintenanceRecord maintenance) {
-        // Section Header
-        Paragraph sectionHeader = new Paragraph("MAINTENANCE RECORD")
-                .setFontSize(16)
+        // Section Header - Modern style
+        Paragraph sectionHeader = new Paragraph("2. Maintenance Record")
+                .setFontSize(18)
                 .setBold()
-                .setBackgroundColor(new DeviceRgb(231, 76, 60))
-                .setFontColor(ColorConstants.WHITE)
-                .setPadding(10)
-                .setTextAlignment(TextAlignment.CENTER)
-                .setMarginBottom(15);
+                .setFontColor(new DeviceRgb(37, 99, 235))
+                .setMarginBottom(5)
+                .setMarginTop(15);
         document.add(sectionHeader);
+        
+        // Blue underline
+        document.add(createColoredLine(new DeviceRgb(37, 99, 235)));
+        document.add(new Paragraph("\n").setMarginBottom(10));
 
         // Time Information
         Paragraph timeHeader = new Paragraph("Time Information")
@@ -700,19 +718,57 @@ public class PdfGenerationService {
         return generateCompleteInspectionPdf(mockGeneral, mockMaintenance, mockData);
     }
 
+    private Table createSeparatorLine() {
+        Table line = new Table(1);
+        line.setWidth(UnitValue.createPercentValue(100));
+        Cell cell = new Cell().add(new Paragraph(""));
+        cell.setBorder(com.itextpdf.layout.borders.Border.NO_BORDER);
+        cell.setBorderBottom(new com.itextpdf.layout.borders.SolidBorder(new DeviceRgb(229, 231, 235), 1));
+        cell.setHeight(1);
+        line.addCell(cell);
+        return line;
+    }
+
+    private Table createColoredLine(DeviceRgb color) {
+        Table line = new Table(1);
+        line.setWidth(UnitValue.createPercentValue(100));
+        Cell cell = new Cell().add(new Paragraph(""));
+        cell.setBorder(com.itextpdf.layout.borders.Border.NO_BORDER);
+        cell.setBorderBottom(new com.itextpdf.layout.borders.SolidBorder(color, 2));
+        cell.setHeight(2);
+        cell.setMarginBottom(10);
+        line.addCell(cell);
+        return line;
+    }
+
     private void addTableCell(Table table, String content, boolean isHeader) {
-        Cell cell = new Cell().add(new Paragraph(content));
+        Cell cell = new Cell().add(new Paragraph(content).setFontSize(10));
         
         if (isHeader) {
-            cell.setBackgroundColor(new DeviceRgb(52, 152, 219))
-                .setFontColor(ColorConstants.WHITE)
-                .setBold();
+            // Modern UI style - light gray background with dark text
+            cell.setBackgroundColor(new DeviceRgb(249, 250, 251))
+                .setFontColor(new DeviceRgb(55, 65, 81))
+                .setBold()
+                .setFontSize(10);
         } else {
-            cell.setBackgroundColor(new DeviceRgb(236, 240, 241));
+            cell.setBackgroundColor(ColorConstants.WHITE)
+                .setFontColor(new DeviceRgb(31, 41, 55))
+                .setFontSize(10);
         }
         
-        cell.setPadding(8);
+        cell.setPadding(10);
+        cell.setBorder(new com.itextpdf.layout.borders.SolidBorder(new DeviceRgb(229, 231, 235), 1));
         table.addCell(cell);
+    }
+
+    private void addSubsectionHeader(Document document, String title) {
+        Paragraph header = new Paragraph(title)
+                .setFontSize(14)
+                .setBold()
+                .setFontColor(new DeviceRgb(55, 65, 81))
+                .setMarginTop(15)
+                .setMarginBottom(10);
+        document.add(header);
     }
 
     private String formatDate(LocalDate date) {
