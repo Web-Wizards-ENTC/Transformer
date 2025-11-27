@@ -331,75 +331,66 @@ export async function predictMLFromUpload(file, modelType = "default") {
 	}
 }
 
-// ========== DIGITAL INSPECTION SUBFORMS ========== 
+// Add API functions for new endpoints
 
-export async function saveGeneralRecord(payload) {
-	const endpoint = "http://localhost:8080/api/digital/general";
-	const response = await fetch(endpoint, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(payload),
-	});
-	if (!response.ok) {
-		throw new Error("Failed to save general record");
-	}
-	return response.json();
+export async function addGeneralRecord(generalRecord) {
+    const endpoint = "http://localhost:8080/api/general-records";
+    try {
+        const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(generalRecord),
+        });
+        if (!response.ok) {
+            throw new Error("Failed to add general record");
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Error adding general record:", error);
+        throw error;
+    }
 }
 
-export async function getGeneralRecord(inspectionId) {
-	const endpoint = `http://localhost:8080/api/digital/general/${inspectionId}`;
-	const response = await fetch(endpoint);
-	if (response.status === 404) return null;
-	if (!response.ok) {
-		throw new Error("Failed to load general record");
-	}
-	return response.json();
+export async function addMaintenanceRecord(maintenanceRecord) {
+    const endpoint = "http://localhost:8080/api/maintenance-records";
+    try {
+        const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(maintenanceRecord),
+        });
+        if (!response.ok) {
+            throw new Error("Failed to add maintenance record");
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Error adding maintenance record:", error);
+        throw error;
+    }
 }
 
-export async function saveMaintenanceRecord(payload) {
-	const endpoint = "http://localhost:8080/api/digital/maintenance";
-	const response = await fetch(endpoint, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(payload),
-	});
-	if (!response.ok) {
-		throw new Error("Failed to save maintenance record");
-	}
-	return response.json();
-}
-
-export async function getMaintenanceRecord(inspectionId) {
-	const endpoint = `http://localhost:8080/api/digital/maintenance/${inspectionId}`;
-	const response = await fetch(endpoint);
-	if (response.status === 404) return null;
-	if (!response.ok) {
-		throw new Error("Failed to load maintenance record");
-	}
-	return response.json();
-}
-
-export async function saveWorkDatasheet(payload) {
-	const endpoint = "http://localhost:8080/api/digital/work-datasheet";
-	const response = await fetch(endpoint, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(payload),
-	});
-	if (!response.ok) {
-		throw new Error("Failed to save work datasheet");
-	}
-	return response.json();
-}
-
-export async function getWorkDatasheet(inspectionId) {
-	const endpoint = `http://localhost:8080/api/digital/work-datasheet/${inspectionId}`;
-	const response = await fetch(endpoint);
-	if (response.status === 404) return null;
-	if (!response.ok) {
-		throw new Error("Failed to load work datasheet");
-	}
-	return response.json();
+export async function addWorkDataSheet(workDataSheet) {
+    const endpoint = "http://localhost:8080/api/work-data-sheets";
+    try {
+        const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(workDataSheet),
+        });
+        if (!response.ok) {
+            throw new Error("Failed to add work data sheet");
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Error adding work data sheet:", error);
+        throw error;
+    }
 }
 
 
