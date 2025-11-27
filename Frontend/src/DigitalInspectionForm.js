@@ -6,7 +6,7 @@ import { FaCalendarAlt, FaClock } from 'react-icons/fa';
 export default function DigitalInspectionForm({ inspection, onSave, onCancel }) {
   const [transformer, setTransformer] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState('general'); // Tab state: 'general', 'maintenance', 'workdata'
   const [form, setForm] = useState({
     // Initial values populated from the inspection object
     date: inspection.inspected || new Date().toISOString().split('T')[0],
@@ -20,6 +20,62 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
     // Add fields for second inspection readings as per PDF [cite: 100]
     voltageR2: '', voltageY2: '', voltageB2: '',
     currentR2: '', currentY2: '', currentB2: '',
+    // Maintenance Record fields
+    startTime: '',
+    completionTime: '',
+    supervisedBy: '',
+    techI: '',
+    techII: '',
+    techIII: '',
+    helpers: '',
+    inspectedBy: '',
+    inspectedDate: '',
+    rectifiedBy: '',
+    rectifiedDate: '',
+    reInspectedBy: '',
+    reInspectedDate: '',
+    css1: '',
+    css1Date: '',
+    allSpotsCorrect: false,
+    css2: '',
+    css2Date: '',
+    // Work - Data Sheet fields
+    gangLeader: '',
+    workDate: '',
+    jobStartedTime: '',
+    serialNo: '',
+    kva: '',
+    make: '',
+    tapPosition: '',
+    txCtRation: '',
+    manufactureYear: '',
+    earthResistance: '',
+    neutral: '',
+    surgeOrBody: '', // 'surge' or 'body'
+    fdsF1: false,
+    fdsF1A: '',
+    fdsF2: false,
+    fdsF2A: '',
+    fdsF3: false,
+    fdsF3A: '',
+    fdsF4: false,
+    fdsF4A: '',
+    fdsF5: false,
+    fdsF5A: '',
+    jobCompletedTime: '',
+    workNotes: '',
+    materials: {
+      copperWire16mm2: false,
+      abcWire70mm2: false,
+      aluminumBinding14mm2: false,
+      earthWire50mm2: false,
+      aac60mm2: false,
+      copperLug16mm2: false,
+      copperLug50mm2: false,
+      ctLug25mm2: false,
+      bimetallicLug35mm2: false,
+      bimetallicLug50mm2: false,
+    },
   });
 
   // Fetch Transformer Details (for non-editable fields)
@@ -66,9 +122,9 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
     <div className="p-8 font-sans bg-gray-50 min-h-screen">
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-xl p-8">
         
-        {/* Header: Thermal Image Inspection Form  */}
+        {/* Header: Digital Inspection Form  */}
         <h1 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-3">
-          Thermal Image Inspection Form
+          Digital Inspection Form
         </h1>
 
         {/* --- Non-Editable Transformer Details --- */}
@@ -80,476 +136,540 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
         </div>
 
         {/* --- Tab Navigation --- */}
-        <div className="flex border-b border-gray-300 mb-6">
-          <button
-            className={`px-6 py-3 font-medium transition-colors ${
-              activeTab === 0
-                ? 'text-indigo-600 border-b-2 border-indigo-600'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-            onClick={() => setActiveTab(0)}
-          >
-            1. General Record
-          </button>
-          <button
-            className={`px-6 py-3 font-medium transition-colors ${
-              activeTab === 1
-                ? 'text-indigo-600 border-b-2 border-indigo-600'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-            onClick={() => setActiveTab(1)}
-          >
-            2. Maintenance Record
-          </button>
-          <button
-            className={`px-6 py-3 font-medium transition-colors ${
-              activeTab === 2
-                ? 'text-indigo-600 border-b-2 border-indigo-600'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-            onClick={() => setActiveTab(2)}
-          >
-            3. Work - Data Sheet
-          </button>
+        <div className="mb-6 border-b border-gray-300">
+          <div className="flex space-x-1">
+            <button
+              onClick={() => setActiveTab('general')}
+              className={`px-6 py-3 font-medium text-sm transition-all ${
+                activeTab === 'general'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-blue-500'
+              }`}
+            >
+              1. General Record
+            </button>
+            <button
+              onClick={() => setActiveTab('maintenance')}
+              className={`px-6 py-3 font-medium text-sm transition-all ${
+                activeTab === 'maintenance'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-blue-500'
+              }`}
+            >
+              2. Maintenance Record
+            </button>
+            <button
+              onClick={() => setActiveTab('workdata')}
+              className={`px-6 py-3 font-medium text-sm transition-all ${
+                activeTab === 'workdata'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-blue-500'
+              }`}
+            >
+              3. Work - Data Sheet
+            </button>
+          </div>
+        </div>
+
+        {/* --- Tab Content --- */}
+        {activeTab === 'general' && (
+          <div>
+        
+        {/* --- Date and Time Fields --- */}
+        <div className="grid grid-cols-2 gap-4 mb-8">
+            <InputField
+                label="Date of Inspection"
+                type="date"
+                value={form.date}
+                onChange={(e) => handleChange("date", e.target.value)}
+                icon={FaCalendarAlt}
+            />
+            <InputField
+                label="Time"
+                type="time"
+                value={form.time}
+                onChange={(e) => handleChange("time", e.target.value)}
+                icon={FaClock}
+            />
+        </div>
+
+        {/* --- Editable Engineer Input Fields --- */}
+        <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Engineer Input Fields</h2>
+
+        <div className="space-y-6">
+            <InputField
+                label="Inspected By (Name/ID)"
+                placeholder="Engineer's Name or ID (e.g., A-110)"
+                value={form.inspectorName}
+                onChange={(e) => handleChange("inspectorName", e.target.value)}
+            />
+
+            <SelectField
+                label="Transformer Status"
+                value={form.transformerStatus}
+                onChange={(e) => handleChange("transformerStatus", e.target.value)}
+                options={['OK', 'Needs Maintenance', 'Urgent Attention']}
+            />
+            
+            {/* Voltage and Current Readings Section (First Inspection) [cite: 99] */}
+            <ReadingsSection 
+                title="First Inspection Voltage & Current Readings"
+                form={form} 
+                handleChange={handleChange} 
+                prefix="First"
+            />
+
+            {/* Voltage and Current Readings Section (Second Inspection) [cite: 100] */}
+            <ReadingsSection 
+                title="Second Inspection Voltage & Current Readings"
+                form={form} 
+                handleChange={handleChange} 
+                prefix="Second"
+            />
+            
+            <TextAreaField
+                label="Recommended Action"
+                placeholder="e.g., Tightening connections, cleaning cooling fins..."
+                value={form.recommendedAction}
+                onChange={(e) => handleChange("recommendedAction", e.target.value)}
+            />
+            <TextAreaField
+                label="Additional Remarks"
+                placeholder="Any other notes or observations."
+                value={form.additionalRemarks}
+                onChange={(e) => handleChange("additionalRemarks", e.target.value)}
+            />
         </div>
         
-        {/* --- Tab Content --- */}
-        {activeTab === 0 && (
-          <div>
-            {/* --- Date and Time Fields --- */}
-            <div className="grid grid-cols-2 gap-4 mb-8">
-                <InputField
-                    label="Date of Inspection"
-                    type="date"
-                    value={form.date}
-                    onChange={(e) => handleChange("date", e.target.value)}
-                    icon={FaCalendarAlt}
-                />
-                <InputField
-                    label="Time"
-                    type="time"
-                    value={form.time}
-                    onChange={(e) => handleChange("time", e.target.value)}
-                    icon={FaClock}
-                />
-            </div>
-
-            {/* --- Editable Engineer Input Fields --- */}
-            <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Engineer Input Fields</h2>
-
-            <div className="space-y-6">
-                <InputField
-                    label="Inspected By (Name/ID)"
-                    placeholder="Engineer's Name or ID (e.g., A-110)"
-                    value={form.inspectorName}
-                    onChange={(e) => handleChange("inspectorName", e.target.value)}
-                />
-
-                <SelectField
-                    label="Transformer Status"
-                    value={form.transformerStatus}
-                    onChange={(e) => handleChange("transformerStatus", e.target.value)}
-                    options={['OK', 'Needs Maintenance', 'Urgent Attention']}
-                />
-                
-                {/* Voltage and Current Readings Section (First Inspection) [cite: 99] */}
-                <ReadingsSection 
-                    title="First Inspection Voltage & Current Readings"
-                    form={form} 
-                    handleChange={handleChange} 
-                    prefix="First"
-                />
-
-                {/* Voltage and Current Readings Section (Second Inspection) [cite: 100] */}
-                <ReadingsSection 
-                    title="Second Inspection Voltage & Current Readings"
-                    form={form} 
-                    handleChange={handleChange} 
-                    prefix="Second"
-                />
-                
-                <TextAreaField
-                    label="Recommended Action"
-                    placeholder="e.g., Tightening connections, cleaning cooling fins..."
-                    value={form.recommendedAction}
-                    onChange={(e) => handleChange("recommendedAction", e.target.value)}
-                />
-                <TextAreaField
-                    label="Additional Remarks"
-                    placeholder="Any other notes or observations."
-                    value={form.additionalRemarks}
-                    onChange={(e) => handleChange("additionalRemarks", e.target.value)}
-                />
-            </div>
-            
-            {/* --- Thermal Image Field (Placeholder) --- */}
-            <div className="mt-8 border-t pt-6">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Baseline Image</h2>
-              <div className="h-40 bg-gray-200 border border-dashed border-gray-400 flex items-center justify-center rounded text-gray-600">
-                [Image Field Placeholder: Image will be fetched from backend.]
-              </div>
-            </div>
+        {/* --- Thermal Image Field (Placeholder) --- */}
+        <div className="mt-8 border-t pt-6">
+          <h2 className="text-xl font-semibold text-gray-700 mb-4">Baseline Image</h2>
+          <div className="h-40 bg-gray-200 border border-dashed border-gray-400 flex items-center justify-center rounded text-gray-600">
+            [Image Field Placeholder: Image will be fetched from backend.]
+          </div>
+        </div>
           </div>
         )}
 
-        {activeTab === 1 && (
+        {activeTab === 'maintenance' && (
           <div>
-            <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Maintenance Record</h2>
-            <div className="space-y-6">
-              {/* Time Fields */}
-              <div className="grid grid-cols-3 gap-4">
-                <InputField
-                  label="Start Time"
-                  type="time"
-                  value={form.startTime || ''}
-                  onChange={(e) => handleChange("startTime", e.target.value)}
-                  icon={FaClock}
-                />
-                <InputField
-                  label="Completion Time"
-                  type="time"
-                  value={form.completionTime || ''}
-                  onChange={(e) => handleChange("completionTime", e.target.value)}
-                  icon={FaClock}
-                />
-                <InputField
-                  label="Supervised BY"
-                  placeholder="e.g., A-221"
-                  value={form.supervisedBy || ''}
-                  onChange={(e) => handleChange("supervisedBy", e.target.value)}
-                />
-              </div>
+            <h2 className="text-2xl font-bold text-gray-700 mb-6">Maintenance Record</h2>
+            
+            {/* Start Time, Completion Time, Supervised BY */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <InputField
+                label="Start Time"
+                type="time"
+                value={form.startTime}
+                onChange={(e) => handleChange("startTime", e.target.value)}
+                placeholder="--:-- --"
+                icon={FaClock}
+              />
+              <InputField
+                label="Completion Time"
+                type="time"
+                value={form.completionTime}
+                onChange={(e) => handleChange("completionTime", e.target.value)}
+                placeholder="--:-- --"
+                icon={FaClock}
+              />
+              <InputField
+                label="Supervised BY"
+                value={form.supervisedBy}
+                onChange={(e) => handleChange("supervisedBy", e.target.value)}
+                placeholder="e.g., A-221"
+              />
+            </div>
 
-              {/* Gang Composition Section */}
-              <div className="p-4 border rounded-lg bg-gray-50">
-                <h3 className="font-semibold text-lg mb-4">Gang Composition</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <InputField
-                    label="Tech I"
-                    placeholder="e.g., T-112"
-                    value={form.techI || ''}
-                    onChange={(e) => handleChange("techI", e.target.value)}
-                  />
-                  <InputField
-                    label="Tech II"
-                    placeholder="e.g., A-110"
-                    value={form.techII || ''}
-                    onChange={(e) => handleChange("techII", e.target.value)}
-                  />
-                  <InputField
-                    label="Tech III"
-                    placeholder="e.g., A-110"
-                    value={form.techIII || ''}
-                    onChange={(e) => handleChange("techIII", e.target.value)}
-                  />
-                  <InputField
-                    label="Helpers"
-                    placeholder="e.g., H-245"
-                    value={form.helpers || ''}
-                    onChange={(e) => handleChange("helpers", e.target.value)}
-                  />
-                </div>
-              </div>
-
-              {/* Inspection and Verification Records */}
+            {/* Gang Composition */}
+            <div className="mb-6 p-6 bg-gray-50 rounded-lg border border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Gang Composition</h3>
               <div className="grid grid-cols-2 gap-4">
-                <SelectField
-                  label="Inspected By"
-                  value={form.inspectedBy || 'A-110'}
-                  onChange={(e) => handleChange("inspectedBy", e.target.value)}
-                  options={['A-110', 'A-221', 'P-453', 'T-112', 'H-245']}
+                <InputField
+                  label="Tech I"
+                  value={form.techI}
+                  onChange={(e) => handleChange("techI", e.target.value)}
+                  placeholder="e.g., T-112"
                 />
                 <InputField
-                  label="Date"
-                  type="date"
-                  value={form.inspectedDate || ''}
-                  onChange={(e) => handleChange("inspectedDate", e.target.value)}
-                  icon={FaCalendarAlt}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <SelectField
-                  label="Rectified By"
-                  value={form.rectifiedBy || 'P-453'}
-                  onChange={(e) => handleChange("rectifiedBy", e.target.value)}
-                  options={['A-110', 'A-221', 'P-453', 'T-112', 'H-245']}
+                  label="Tech II"
+                  value={form.techII}
+                  onChange={(e) => handleChange("techII", e.target.value)}
+                  placeholder="e.g., A-110"
                 />
                 <InputField
-                  label="Date"
-                  type="date"
-                  value={form.rectifiedDate || ''}
-                  onChange={(e) => handleChange("rectifiedDate", e.target.value)}
-                  icon={FaCalendarAlt}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <SelectField
-                  label="Re Inspected By"
-                  value={form.reInspectedBy || 'A-110'}
-                  onChange={(e) => handleChange("reInspectedBy", e.target.value)}
-                  options={['A-110', 'A-221', 'P-453', 'T-112', 'H-245']}
+                  label="Tech III"
+                  value={form.techIII}
+                  onChange={(e) => handleChange("techIII", e.target.value)}
+                  placeholder="e.g., A-110"
                 />
                 <InputField
-                  label="Date"
-                  type="date"
-                  value={form.reInspectedDate || ''}
-                  onChange={(e) => handleChange("reInspectedDate", e.target.value)}
-                  icon={FaCalendarAlt}
+                  label="Helpers"
+                  value={form.helpers}
+                  onChange={(e) => handleChange("helpers", e.target.value)}
+                  placeholder="e.g., H-245"
                 />
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <SelectField
-                  label="CSS"
-                  value={form.css || 'A-110'}
-                  onChange={(e) => handleChange("css", e.target.value)}
-                  options={['A-110', 'A-221', 'P-453', 'T-112', 'H-245']}
-                />
-                <InputField
-                  label="Date"
-                  type="date"
-                  value={form.cssDate || ''}
-                  onChange={(e) => handleChange("cssDate", e.target.value)}
-                  icon={FaCalendarAlt}
-                />
-              </div>
+            {/* Inspected By & Date */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <SelectField
+                label="Inspected By"
+                value={form.inspectedBy}
+                onChange={(e) => handleChange("inspectedBy", e.target.value)}
+                options={['', 'A-110', 'T-112', 'P-453', 'Other']}
+              />
+              <InputField
+                label="Date"
+                type="date"
+                value={form.inspectedDate}
+                onChange={(e) => handleChange("inspectedDate", e.target.value)}
+                placeholder="mm/dd/yyyy"
+                icon={FaCalendarAlt}
+              />
+            </div>
 
-              {/* Checkbox for corrected spots */}
-              <div className="flex items-center gap-2 p-3 bg-gray-50 rounded">
+            {/* Rectified By & Date */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <SelectField
+                label="Rectified By"
+                value={form.rectifiedBy}
+                onChange={(e) => handleChange("rectifiedBy", e.target.value)}
+                options={['', 'P-453', 'A-110', 'T-112', 'Other']}
+              />
+              <InputField
+                label="Date"
+                type="date"
+                value={form.rectifiedDate}
+                onChange={(e) => handleChange("rectifiedDate", e.target.value)}
+                placeholder="mm/dd/yyyy"
+                icon={FaCalendarAlt}
+              />
+            </div>
+
+            {/* Re Inspected By & Date */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <SelectField
+                label="Re Inspected By"
+                value={form.reInspectedBy}
+                onChange={(e) => handleChange("reInspectedBy", e.target.value)}
+                options={['', 'A-110', 'T-112', 'P-453', 'Other']}
+              />
+              <InputField
+                label="Date"
+                type="date"
+                value={form.reInspectedDate}
+                onChange={(e) => handleChange("reInspectedDate", e.target.value)}
+                placeholder="mm/dd/yyyy"
+                icon={FaCalendarAlt}
+              />
+            </div>
+
+            {/* CSS & Date */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <SelectField
+                label="CSS"
+                value={form.css1}
+                onChange={(e) => handleChange("css1", e.target.value)}
+                options={['', 'A-110', 'T-112', 'P-453', 'Other']}
+              />
+              <InputField
+                label="Date"
+                type="date"
+                value={form.css1Date}
+                onChange={(e) => handleChange("css1Date", e.target.value)}
+                placeholder="mm/dd/yyyy"
+                icon={FaCalendarAlt}
+              />
+            </div>
+
+            {/* Checkbox: All Identified spots were corrected */}
+            <div className="mb-6">
+              <label className="flex items-center space-x-3 cursor-pointer">
                 <input
                   type="checkbox"
-                  id="spotsCorrect"
-                  checked={form.allSpotsCorrect || false}
+                  checked={form.allSpotsCorrect}
                   onChange={(e) => handleChange("allSpotsCorrect", e.target.checked)}
-                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                  className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                 />
-                <label htmlFor="spotsCorrect" className="text-sm font-medium text-gray-700">
-                  All Identified spots were corrected
-                </label>
-              </div>
+                <span className="text-sm font-medium text-gray-700">All Identified spots were corrected</span>
+              </label>
+            </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <SelectField
-                  label="CSS"
-                  value={form.css2 || 'A-110'}
-                  onChange={(e) => handleChange("css2", e.target.value)}
-                  options={['A-110', 'A-221', 'P-453', 'T-112', 'H-245']}
-                />
-                <InputField
-                  label="Date"
-                  type="date"
-                  value={form.css2Date || ''}
-                  onChange={(e) => handleChange("css2Date", e.target.value)}
-                  icon={FaCalendarAlt}
-                />
-              </div>
+            {/* CSS & Date (Second) */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <SelectField
+                label="CSS"
+                value={form.css2}
+                onChange={(e) => handleChange("css2", e.target.value)}
+                options={['', 'A-110', 'T-112', 'P-453', 'Other']}
+              />
+              <InputField
+                label="Date"
+                type="date"
+                value={form.css2Date}
+                onChange={(e) => handleChange("css2Date", e.target.value)}
+                placeholder="mm/dd/yyyy"
+                icon={FaCalendarAlt}
+              />
             </div>
           </div>
         )}
 
-        {activeTab === 2 && (
+        {activeTab === 'workdata' && (
           <div>
-            <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Work - Data Sheet</h2>
-            <div className="space-y-6">
-              {/* First Row: Gang Leader, Date, Job Started Time */}
-              <div className="grid grid-cols-3 gap-4">
-                <SelectField
-                  label="Gang Leader"
-                  value={form.gangLeader || 'P-453'}
-                  onChange={(e) => handleChange("gangLeader", e.target.value)}
-                  options={['P-453', 'A-110', 'A-221', 'T-112', 'H-245']}
-                />
-                <InputField
-                  label="Date"
-                  type="date"
-                  value={form.workDate || ''}
-                  onChange={(e) => handleChange("workDate", e.target.value)}
-                  icon={FaCalendarAlt}
-                />
-                <InputField
-                  label="Job Started Time"
-                  type="time"
-                  value={form.jobStartedTime || ''}
-                  onChange={(e) => handleChange("jobStartedTime", e.target.value)}
-                  icon={FaClock}
-                />
-              </div>
+            <h2 className="text-2xl font-bold text-gray-700 mb-6">Work - Data Sheet</h2>
+            
+            {/* Gang Leader, Date, Job Started Time */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <SelectField
+                label="Gang Leader"
+                value={form.gangLeader}
+                onChange={(e) => handleChange("gangLeader", e.target.value)}
+                options={['', 'P-453', 'A-110', 'T-112', 'Other']}
+              />
+              <InputField
+                label="Date"
+                type="date"
+                value={form.workDate}
+                onChange={(e) => handleChange("workDate", e.target.value)}
+                placeholder="mm/dd/yyyy"
+                icon={FaCalendarAlt}
+              />
+              <InputField
+                label="Job Started Time"
+                type="time"
+                value={form.jobStartedTime}
+                onChange={(e) => handleChange("jobStartedTime", e.target.value)}
+                placeholder="--:-- --"
+                icon={FaClock}
+              />
+            </div>
 
-              {/* Second Row: Serial No, kVA, Make */}
-              <div className="grid grid-cols-3 gap-4">
-                <InputField
-                  label="Serial No."
-                  placeholder="e.g., J-14-V016010026"
-                  value={form.serialNo || ''}
-                  onChange={(e) => handleChange("serialNo", e.target.value)}
-                />
-                <SelectField
-                  label="kVA"
-                  value={form.kva || '50'}
-                  onChange={(e) => handleChange("kva", e.target.value)}
-                  options={['25', '50', '100', '160', '250', '315', '500']}
-                />
-                <SelectField
-                  label="Make"
-                  value={form.make || 'LTL'}
-                  onChange={(e) => handleChange("make", e.target.value)}
-                  options={['LTL', 'Siemens', 'ABB', 'Schneider', 'Other']}
-                />
-              </div>
+            {/* Serial No., kVA, Make */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <InputField
+                label="Serial No."
+                value={form.serialNo}
+                onChange={(e) => handleChange("serialNo", e.target.value)}
+                placeholder="e.g., J-14-V016010026"
+              />
+              <SelectField
+                label="kVA"
+                value={form.kva}
+                onChange={(e) => handleChange("kva", e.target.value)}
+                options={['', '50', '100', '160', '200', '250', '315', '400', '500']}
+              />
+              <SelectField
+                label="Make"
+                value={form.make}
+                onChange={(e) => handleChange("make", e.target.value)}
+                options={['', 'LTL', 'CGL', 'Siemens', 'ABB', 'Other']}
+              />
+            </div>
 
-              {/* Third Row: Tap Position, Tx CT Ration, Manufacture Year */}
-              <div className="grid grid-cols-3 gap-4">
-                <SelectField
-                  label="Tap Position"
-                  value={form.tapPosition || '1'}
-                  onChange={(e) => handleChange("tapPosition", e.target.value)}
-                  options={['1', '2', '3', '4', '5']}
-                />
-                <InputField
-                  label="Tx CT Ration"
-                  placeholder="e.g., 300/5A"
-                  value={form.txCtRation || ''}
-                  onChange={(e) => handleChange("txCtRation", e.target.value)}
-                />
-                <InputField
-                  label="Manufacture Year"
-                  type="number"
-                  placeholder="e.g., 2014"
-                  value={form.manufactureYear || ''}
-                  onChange={(e) => handleChange("manufactureYear", e.target.value)}
-                />
-              </div>
+            {/* Tap Position, Tx CT Ration, Manufacture Year */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <SelectField
+                label="Tap Position"
+                value={form.tapPosition}
+                onChange={(e) => handleChange("tapPosition", e.target.value)}
+                options={['', '1', '2', '3', '4', '5']}
+              />
+              <InputField
+                label="Tx CT Ration"
+                value={form.txCtRation}
+                onChange={(e) => handleChange("txCtRation", e.target.value)}
+                placeholder="e.g., 300/5A"
+              />
+              <InputField
+                label="Manufacture Year"
+                value={form.manufactureYear}
+                onChange={(e) => handleChange("manufactureYear", e.target.value)}
+                placeholder="e.g., 2014"
+              />
+            </div>
 
-              {/* Fourth Row: Earth Resistance, Neutral */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-2">
-                  <InputField
-                    label="Earth Resistance"
-                    placeholder="-"
-                    value={form.earthResistance || ''}
+            {/* Earth Resistance & Neutral */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">Earth Resistance</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={form.earthResistance}
                     onChange={(e) => handleChange("earthResistance", e.target.value)}
+                    className="w-full border border-gray-300 rounded p-2 pr-10 focus:ring-indigo-500 focus:border-indigo-500"
                   />
-                  <span className="mt-6 text-gray-600">Ω</span>
+                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">Ω</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <InputField
-                    label="Neutral"
-                    placeholder="-"
-                    value={form.neutral || ''}
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">Neutral</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={form.neutral}
                     onChange={(e) => handleChange("neutral", e.target.value)}
+                    placeholder="-"
+                    className="w-full border border-gray-300 rounded p-2 pr-10 focus:ring-indigo-500 focus:border-indigo-500"
                   />
-                  <span className="mt-6 text-gray-600">Ω</span>
+                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">Ω</span>
                 </div>
               </div>
+            </div>
 
-              {/* Radio buttons: Surge/Body */}
-              <div className="flex items-center gap-6">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="surgeBody"
-                    value="Surge"
-                    checked={form.surgeBody === 'Surge'}
-                    onChange={(e) => handleChange("surgeBody", e.target.value)}
-                    className="w-4 h-4 text-indigo-600"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Surge</span>
-                </label>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="surgeBody"
-                    value="Body"
-                    checked={form.surgeBody === 'Body'}
-                    onChange={(e) => handleChange("surgeBody", e.target.value)}
-                    className="w-4 h-4 text-indigo-600"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Body</span>
-                </label>
-              </div>
+            {/* Radio buttons: Surge / Body */}
+            <div className="flex items-center space-x-6 mb-6">
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="surgeOrBody"
+                  value="surge"
+                  checked={form.surgeOrBody === 'surge'}
+                  onChange={(e) => handleChange("surgeOrBody", e.target.value)}
+                  className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                />
+                <span className="text-sm font-medium text-gray-700">Surge</span>
+              </label>
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="surgeOrBody"
+                  value="body"
+                  checked={form.surgeOrBody === 'body'}
+                  onChange={(e) => handleChange("surgeOrBody", e.target.value)}
+                  className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                />
+                <span className="text-sm font-medium text-gray-700">Body</span>
+              </label>
+            </div>
 
-              {/* FDS Fuse Ratings */}
-              <div className="p-4 border rounded-lg bg-gray-50">
-                <h3 className="font-semibold text-lg mb-3">FDS Fuse Ratings</h3>
-                <div className="grid grid-cols-5 gap-4">
-                  {['F1', 'F2', 'F3', 'F4', 'F5'].map((fuse) => (
-                    <div key={fuse} className="flex items-center gap-2">
-                      <label className="text-sm font-medium text-gray-700">{fuse}</label>
+            {/* FDS Fuse Ratings */}
+            <div className="p-6 bg-gray-50 rounded-lg border border-gray-200 mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">FDS Fuse Ratings</h3>
+              <div className="grid grid-cols-5 gap-4">
+                {[1, 2, 3, 4, 5].map(num => (
+                  <div key={num} className="flex items-center space-x-2">
+                    <label className="flex items-center space-x-2">
+                      <span className="text-sm font-medium text-gray-700">F{num}</span>
                       <input
                         type="checkbox"
-                        checked={form[`fds${fuse}`] || false}
-                        onChange={(e) => handleChange(`fds${fuse}`, e.target.checked)}
-                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded"
+                        checked={form[`fdsF${num}`]}
+                        onChange={(e) => handleChange(`fdsF${num}`, e.target.checked)}
+                        className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                       />
-                      <input
-                        type="text"
-                        placeholder="A"
-                        value={form[`fds${fuse}Value`] || ''}
-                        onChange={(e) => handleChange(`fds${fuse}Value`, e.target.value)}
-                        className="w-12 border border-gray-300 rounded p-1 text-sm"
-                      />
-                    </div>
-                  ))}
-                </div>
+                    </label>
+                    <input
+                      type="text"
+                      value={form[`fdsF${num}A`]}
+                      onChange={(e) => handleChange(`fdsF${num}A`, e.target.value)}
+                      placeholder="A"
+                      className="w-20 border border-gray-300 rounded p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                  </div>
+                ))}
               </div>
+            </div>
 
-              {/* Job Completed Time */}
+            {/* Job Completed Time */}
+            <div className="mb-6">
               <InputField
                 label="Job Completed Time"
                 type="time"
-                value={form.jobCompletedTime || ''}
+                value={form.jobCompletedTime}
                 onChange={(e) => handleChange("jobCompletedTime", e.target.value)}
+                placeholder="--:-- --"
                 icon={FaClock}
               />
+            </div>
 
-              {/* Notes */}
-              <TextAreaField
-                label="Notes"
-                placeholder="Detected minor overheating on the transformer's secondary winding during peak load hours. Hotspot temperature measured at 112.2°F, slightly above tolerance threshold for current load profile. Recommend tightening connections on the affected phase, cleaning cooling fins, and rechecking temperature during next inspection cycle. No immediate outage required."
-                value={form.workNotes || ''}
+            {/* Notes */}
+            <div className="mb-6">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Notes</label>
+              <textarea
+                value={form.workNotes}
                 onChange={(e) => handleChange("workNotes", e.target.value)}
-                rows={4}
+                placeholder="Detected minor overheating on the transformer's secondary winding during peak load hours. Hotspot temperature measured at 112.2°F, slightly above tolerance threshold for current load profile. Recommend tightening connections on the affected phase, cleaning cooling fins, and rechecking temperature during next inspection cycle. No immediate outage required."
+                rows="5"
+                className="w-full border border-gray-300 rounded p-3 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
               />
+            </div>
 
-              {/* Materials/Items Section */}
-              <div className="p-4 border rounded-lg bg-gray-50">
-                <h3 className="font-semibold text-lg mb-3">Materials/Items Used</h3>
-                <div className="space-y-3">
-                  {[
-                    { label: '16mm2 Copper wire', code: 'B112' },
-                    { label: '70mm2 ABC wire', code: 'B244' },
-                    { label: 'Aluminum binding 14mm2', code: 'B712' },
-                    { label: '50mm2 Earth Wire', code: 'B815' },
-                    { label: '60mm2 AAC', code: 'C113' },
-                    { label: 'Copper Lug 16mm2', code: 'G332' },
-                    { label: 'Copper Lug 50mm2', code: 'G354' },
-                    { label: 'C/T Lug 2.5mm2', code: 'G360' },
-                    { label: 'Bimetallic Lug 35mm2', code: 'G373A' },
-                    { label: 'Bimetallic Lug 50mm2', code: 'G374' },
-                  ].map((item, idx) => (
-                    <div key={idx} className="grid grid-cols-3 gap-4 items-center">
-                      <span className="text-sm text-gray-700">{item.label}</span>
-                      <span className="text-sm text-gray-600">{item.code}</span>
-                      <input
-                        type="checkbox"
-                        checked={form[`material_${item.code}`] || false}
-                        onChange={(e) => handleChange(`material_${item.code}`, e.target.checked)}
-                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded"
-                      />
-                    </div>
-                  ))}
-                </div>
+            {/* Materials/Items Used */}
+            <div className="p-6 bg-gray-50 rounded-lg border border-gray-200 mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Materials/Items Used</h3>
+              <div className="space-y-3">
+                <MaterialItem 
+                  label="16mm2 Copper wire" 
+                  code="B112"
+                  checked={form.materials.copperWire16mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, copperWire16mm2: checked })}
+                />
+                <MaterialItem 
+                  label="70mm2 ABC wire" 
+                  code="B244"
+                  checked={form.materials.abcWire70mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, abcWire70mm2: checked })}
+                />
+                <MaterialItem 
+                  label="Aluminum binding 14mm2" 
+                  code="B712"
+                  checked={form.materials.aluminumBinding14mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, aluminumBinding14mm2: checked })}
+                />
+                <MaterialItem 
+                  label="50mm2 Earth Wire" 
+                  code="B815"
+                  checked={form.materials.earthWire50mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, earthWire50mm2: checked })}
+                />
+                <MaterialItem 
+                  label="60mm2 AAC" 
+                  code="C113"
+                  checked={form.materials.aac60mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, aac60mm2: checked })}
+                />
+                <MaterialItem 
+                  label="Copper Lug 16mm2" 
+                  code="G332"
+                  checked={form.materials.copperLug16mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, copperLug16mm2: checked })}
+                />
+                <MaterialItem 
+                  label="Copper Lug 50mm2" 
+                  code="G354"
+                  checked={form.materials.copperLug50mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, copperLug50mm2: checked })}
+                />
+                <MaterialItem 
+                  label="C/T Lug 2.5mm2" 
+                  code="G360"
+                  checked={form.materials.ctLug25mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, ctLug25mm2: checked })}
+                />
+                <MaterialItem 
+                  label="Bimetallic Lug 35mm2" 
+                  code="G373A"
+                  checked={form.materials.bimetallicLug35mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, bimetallicLug35mm2: checked })}
+                />
+                <MaterialItem 
+                  label="Bimetallic Lug 50mm2" 
+                  code="G374"
+                  checked={form.materials.bimetallicLug50mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, bimetallicLug50mm2: checked })}
+                />
               </div>
             </div>
           </div>
         )}
 
-        {/* --- Back, Save/Edit Buttons --- */}
-        <div className="flex justify-between items-center mt-8 pt-4 border-t">
+        {/* --- Save/Edit Buttons [cite: 118, 119] --- */}
+        <div className="flex justify-between gap-4 mt-8 pt-4 border-t">
           <button
-            className="px-6 py-2 bg-gray-600 text-white rounded-lg shadow-md hover:bg-gray-700"
+            className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
             onClick={onCancel}
           >
             Back
@@ -604,14 +724,14 @@ const InputField = ({ label, type = "text", value, onChange, placeholder, icon: 
   </div>
 );
 
-const TextAreaField = ({ label, value, onChange, placeholder, rows = 3 }) => (
+const TextAreaField = ({ label, value, onChange, placeholder }) => (
     <div className="flex flex-col">
         <label className="text-sm font-medium text-gray-700 mb-1">{label}</label>
         <textarea
             value={value}
             onChange={onChange}
             placeholder={placeholder}
-            rows={rows}
+            rows="3"
             className="w-full border border-gray-300 rounded p-2 focus:ring-indigo-500 focus:border-indigo-500"
         />
     </div>
@@ -668,4 +788,17 @@ const ReadingsSection = ({ title, form, handleChange, prefix }) => (
             </div>
         </div>
     </div>
+);
+
+const MaterialItem = ({ label, code, checked, onChange }) => (
+  <div className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
+    <span className="text-sm text-gray-700 flex-1">{label}</span>
+    <span className="text-sm text-gray-500 w-20 text-center">{code}</span>
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={(e) => onChange(e.target.checked)}
+      className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+    />
+  </div>
 );
