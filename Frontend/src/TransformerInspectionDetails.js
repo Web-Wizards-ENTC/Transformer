@@ -11,12 +11,12 @@ const statusColors = {
   'Completed': 'bg-purple-100 text-purple-700',
 };
 
-export default function TransformerInspectionDetails({ transformer, onBack }) {
+export default function TransformerInspectionDetails({ transformer, onBack, setPage, setSelectedInspection }){
   const [showThermal, setShowThermal] = useState(false);
-  const [selectedInspection, setSelectedInspection] = useState(null);
   const [showBaselineUpload, setShowBaselineUpload] = useState(false);
   const [baselineProgress, setBaselineProgress] = useState(0);
   const [transformerImages, setTransformerImages] = useState({...transformerImagesJSON});
+  const [currentInspectionView, setCurrentInspectionView] = useState(null);
 
   React.useEffect(() => {
     void transformerImages;
@@ -130,9 +130,9 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
         </div>
       </div>
       {/* Inspections Table or Thermal Image Upload Section */}
-      {showThermal && selectedInspection ? (
+      {showThermal && currentInspectionView ? (
         <div className="mt-8">
-          <ThermalImageUpload inspection={selectedInspection} />
+          <ThermalImageUpload inspection={currentInspectionView} />
         </div>
       ) : (
         <div className="bg-white rounded shadow p-6">
@@ -178,7 +178,16 @@ export default function TransformerInspectionDetails({ transformer, onBack }) {
                     <span className={`px-3 py-1 rounded ${statusColors[insp.status]}`}>{insp.status}</span>
                   </td>
                   <td className="py-2 px-4 text-right">
-                    <button className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700" onClick={() => { setSelectedInspection(insp); setShowThermal(true); }}>View</button>
+                    <button 
+                      className="text-indigo-600 px-4 py-1 rounded hover:bg-indigo-100 border border-indigo-600 mr-2"
+                      onClick={() => {
+                        setSelectedInspection(insp); // Set the current inspection
+                        setPage('digitalForm');      // Navigate to the form
+                      }}
+                    >
+                      Digital Form
+                    </button>
+                    <button className="bg-indigo-600 text-white px-4 py-1 rounded hover:bg-indigo-700" onClick={() => { setCurrentInspectionView(insp); setShowThermal(true); }}>View</button>
                   </td>
                 </tr>
               ))}
