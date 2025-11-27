@@ -331,4 +331,66 @@ export async function predictMLFromUpload(file, modelType = "default") {
 	}
 }
 
+// Add API functions for new endpoints
+
+export async function addGeneralRecord(generalRecord) {
+    const endpoint = "http://localhost:8080/api/general-records";
+    try {
+        const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(generalRecord),
+        });
+        if (!response.ok) {
+            throw new Error("Failed to add general record");
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Error adding general record:", error);
+        throw error;
+    }
+}
+
+export async function addMaintenanceRecord(maintenanceRecord) {
+    const endpoint = "http://localhost:8080/api/maintenance-records";
+    try {
+        const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(maintenanceRecord),
+        });
+        if (!response.ok) {
+            throw new Error("Failed to add maintenance record");
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Error adding maintenance record:", error);
+        throw error;
+    }
+}
+
+export async function addWorkDataSheet(workDataSheet) {
+    const endpoint = "http://localhost:8080/api/work-data-sheets";
+    try {
+        const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(workDataSheet),
+        });
+        if (!response.ok) {
+            throw new Error("Failed to add work data sheet");
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Error adding work data sheet:", error);
+        throw error;
+    }
+}
+
 
