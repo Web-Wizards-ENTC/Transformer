@@ -6,6 +6,7 @@ import { FaCalendarAlt, FaClock } from 'react-icons/fa';
 export default function DigitalInspectionForm({ inspection, onSave, onCancel }) {
   const [transformer, setTransformer] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('general'); // Tab state: 'general', 'maintenance', 'workdata'
   const [form, setForm] = useState({
     // Initial values populated from the inspection object
     date: inspection.inspected || new Date().toISOString().split('T')[0],
@@ -77,6 +78,46 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
           <DetailField label="Pole No." value={poleNo} isReadOnly={true} />
           <DetailField label="Location Details" value={locationDetails} isReadOnly={true} />
         </div>
+
+        {/* --- Tab Navigation --- */}
+        <div className="mb-6 border-b border-gray-300">
+          <div className="flex space-x-1">
+            <button
+              onClick={() => setActiveTab('general')}
+              className={`px-6 py-3 font-medium text-sm transition-all ${
+                activeTab === 'general'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-blue-500'
+              }`}
+            >
+              1. General Record
+            </button>
+            <button
+              onClick={() => setActiveTab('maintenance')}
+              className={`px-6 py-3 font-medium text-sm transition-all ${
+                activeTab === 'maintenance'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-blue-500'
+              }`}
+            >
+              2. Maintenance Record
+            </button>
+            <button
+              onClick={() => setActiveTab('workdata')}
+              className={`px-6 py-3 font-medium text-sm transition-all ${
+                activeTab === 'workdata'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-blue-500'
+              }`}
+            >
+              3. Work - Data Sheet
+            </button>
+          </div>
+        </div>
+
+        {/* --- Tab Content --- */}
+        {activeTab === 'general' && (
+          <div>
         
         {/* --- Date and Time Fields --- */}
         <div className="grid grid-cols-2 gap-4 mb-8">
@@ -151,6 +192,22 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
             [Image Field Placeholder: Image will be fetched from backend.]
           </div>
         </div>
+          </div>
+        )}
+
+        {activeTab === 'maintenance' && (
+          <div className="p-6 bg-gray-50 rounded-lg">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">Maintenance Record</h2>
+            <p className="text-gray-600">Maintenance record content will be displayed here.</p>
+          </div>
+        )}
+
+        {activeTab === 'workdata' && (
+          <div className="p-6 bg-gray-50 rounded-lg">
+            <h2 className="text-xl font-semibold text-gray-700 mb-4">Work - Data Sheet</h2>
+            <p className="text-gray-600">Work data sheet content will be displayed here.</p>
+          </div>
+        )}
 
         {/* --- Save/Edit Buttons [cite: 118, 119] --- */}
         <div className="flex justify-end gap-4 mt-8 pt-4 border-t">
