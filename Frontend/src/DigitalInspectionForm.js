@@ -81,17 +81,31 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
 
   const handleViewPastForms = () => setShowPastForms(true);
   const handleView = (row) => console.log("View row:", row);
-  const handleDownload = (row) => {
-    const dataStr = JSON.stringify(row, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `inspection-${row.id}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+  const handleDownload = async (row) => {
+    try {
+      // Fetch PDF from backend
+      const response = await fetch("http://localhost:8080/api/pdf/generate/mock");
+      
+      if (!response.ok) {
+        throw new Error("Failed to download PDF");
+      }
+      
+      // Create blob from response
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `inspection_${row.date}_${row.inspector}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
+      alert("Failed to download PDF. Please try again.");
+    }
   };
 
   if (loading) return <div className="p-8 text-center">Loading transformer details...</div>;
