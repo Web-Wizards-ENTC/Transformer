@@ -197,13 +197,13 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
               <TextAreaField label="Additional Remarks" value={form.additionalRemarks} onChange={(e) => handleChange("additionalRemarks", e.target.value)} placeholder="Any other notes or observations." />
             </div>
 
-            {/* Baseline Image */}
+            {/* Inspection Image */}
             <div className="mt-8 border-t pt-6">
-              <h2 className="text-xl font-semibold text-gray-700 mb-4">Baseline Image</h2>
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">Inspection Image</h2>
               <div className="h-40 w-full border border-dashed border-gray-400 flex items-center justify-center rounded overflow-hidden">
                 <img
                   src={transformer?.imageUrl || defaultImage}
-                  alt="Baseline Transformer"
+                  alt="Inspection Transformer"
                   className="object-contain h-full w-full"
                 />
               </div>
