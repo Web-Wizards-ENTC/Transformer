@@ -32,6 +32,13 @@ import com.webwizards.transformerApp.repository.TransformerRepository;
 import com.webwizards.transformerApp.service.PythonMLService;
 // import java.nio.file.Paths;
 
+// Add imports for new models and repositories
+import com.webwizards.transformerApp.model.GeneralRecord;
+import com.webwizards.transformerApp.model.MaintenanceRecord;
+import com.webwizards.transformerApp.model.WorkDataSheet;
+import com.webwizards.transformerApp.repository.GeneralRecordRepository;
+import com.webwizards.transformerApp.repository.MaintenanceRecordRepository;
+import com.webwizards.transformerApp.repository.WorkDataSheetRepository;
 
 
 @CrossOrigin(origins = "http://localhost:3000")
@@ -43,18 +50,29 @@ public class MainController {
     private final InspectionRepository inspectionRepo;
     private final InspectionImageRepository inspectionImageRepo;
     private final PythonMLService pythonMLService;
+    private final GeneralRecordRepository generalRecordRepo;
+    private final MaintenanceRecordRepository maintenanceRecordRepo;
+    private final WorkDataSheetRepository workDataSheetRepo;
 
     public MainController(TransformerRepository transformerRepo, InspectionRepository inspectionRepo, 
-                         InspectionImageRepository inspectionImageRepo, PythonMLService pythonMLService) {
+                         InspectionImageRepository inspectionImageRepo, PythonMLService pythonMLService,
+                         GeneralRecordRepository generalRecordRepo, MaintenanceRecordRepository maintenanceRecordRepo,
+                         WorkDataSheetRepository workDataSheetRepo) {
         this.transformerRepo = transformerRepo;
         this.inspectionRepo = inspectionRepo;
         this.inspectionImageRepo = inspectionImageRepo;
         this.pythonMLService = pythonMLService;
+        this.generalRecordRepo = generalRecordRepo;
+        this.maintenanceRecordRepo = maintenanceRecordRepo;
+        this.workDataSheetRepo = workDataSheetRepo;
     }
 
     // ----------- TRANSFORMERS -------------
     @PostMapping("/transformers")
     public Transformer addTransformer(@RequestBody Transformer transformer) {
+        if (transformer == null) {
+            throw new IllegalArgumentException("Transformer data cannot be null");
+        }
         return transformerRepo.save(transformer);
     }
 
@@ -65,16 +83,19 @@ public class MainController {
 
     @PostMapping("/inspections")
     public Inspection addInspection(@RequestBody InspectionRequest request) {
-    // Create a new Inspection
-    Inspection inspection = new Inspection();
-    inspection.setBranch(request.getBranch());
-    inspection.setTransformerNo(request.getTransformerNo());
-    inspection.setDate(request.getDate());
-    inspection.setTime(request.getTime());
-    inspection.setStatus(request.getStatus());
-    inspection.setMaintainanceDate(request.getMaintainanceDate());
-    // Save into DB
-    return inspectionRepo.save(inspection);
+        if (request == null) {
+            throw new IllegalArgumentException("Inspection request cannot be null");
+        }
+        // Create a new Inspection
+        Inspection inspection = new Inspection();
+        inspection.setBranch(request.getBranch());
+        inspection.setTransformerNo(request.getTransformerNo());
+        inspection.setDate(request.getDate());
+        inspection.setTime(request.getTime());
+        inspection.setStatus(request.getStatus());
+        inspection.setMaintainanceDate(request.getMaintainanceDate());
+        // Save into DB
+        return inspectionRepo.save(inspection);
     }
     
 
@@ -87,9 +108,13 @@ public class MainController {
     public InspectionImage uploadImage(
             @RequestParam("inspectionId") Long inspectionId,
             @RequestParam("file") MultipartFile file) throws IOException {
-                
+
+        if (inspectionId == null) {
+            throw new IllegalArgumentException("Inspection ID cannot be null");
+        }
+
         Inspection inspection = inspectionRepo.findById(inspectionId)
-                .orElseThrow(() -> new RuntimeException("Inspection not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Inspection not found"));
 
         // Create uploads folder if not exists
         String folder = System.getProperty("user.dir") + "/uploads/";
@@ -112,22 +137,30 @@ public class MainController {
 
     @GetMapping("/images/{id}")
     public ResponseEntity<Resource> getImage(@PathVariable Long id) throws Exception {
-        // 1. Find the image in DB
-        InspectionImage image = inspectionImageRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Image not found"));
-
-        // 2. Get the file path
-        Path path = Paths.get(image.getFilePath());
-
-        // 3. Load it as a Resource
-        Resource resource = new UrlResource(path.toUri());
-        if (!resource.exists()) {
-            throw new RuntimeException("File not found on disk: " + image.getFilePath());
+        if (id == null) {
+            throw new IllegalArgumentException("Image ID cannot be null");
         }
 
-        // 4. Return the file with correct content type
+        InspectionImage image = inspectionImageRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Image not found"));
+
+        Path path = Paths.get(image.getFilePath());
+        if (path == null) {
+            throw new IllegalArgumentException("File path cannot be null");
+        }
+
+        Resource resource = new UrlResource(path.toUri());
+        if (!resource.exists()) {
+            throw new IllegalArgumentException("File not found on disk: " + image.getFilePath());
+        }
+
+        String contentType = image.getContentType();
+        if (contentType == null) {
+            throw new IllegalArgumentException("Content type cannot be null");
+        }
+
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(image.getContentType()))
+                .contentType(MediaType.parseMediaType(contentType))
                 .body(resource);
     }
 
@@ -213,29 +246,28 @@ public class MainController {
     public ResponseEntity<MLPredictionResponse> analyzeThermalImagesById(
             @PathVariable Long baselineId,
             @PathVariable Long candidateId) {
-        try {
-            // Find both images in DB
-            InspectionImage baselineImage = inspectionImageRepo.findById(baselineId)
-                    .orElseThrow(() -> new RuntimeException("Baseline image not found"));
-            
-            InspectionImage candidateImage = inspectionImageRepo.findById(candidateId)
-                    .orElseThrow(() -> new RuntimeException("Candidate image not found"));
-            
-            // Create thermal analysis request
-            MLPredictionRequest request = new MLPredictionRequest();
-            request.setBaselineImagePath(baselineImage.getFilePath());
-            request.setCandidateImagePath(candidateImage.getFilePath());
-            request.setModelType("thermal_analysis");
-            
-            MLPredictionResponse response = pythonMLService.analyzeThermalImages(request);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            MLPredictionResponse errorResponse = MLPredictionResponse.error(e.getMessage());
-            return ResponseEntity.status(404).body(errorResponse);
-        } catch (Exception e) {
-            MLPredictionResponse errorResponse = MLPredictionResponse.error("Internal server error: " + e.getMessage());
-            return ResponseEntity.status(500).body(errorResponse);
+
+        if (baselineId == null || candidateId == null) {
+            throw new IllegalArgumentException("Baseline ID and Candidate ID cannot be null");
         }
+
+        InspectionImage baselineImage = inspectionImageRepo.findById(baselineId)
+                .orElseThrow(() -> new IllegalArgumentException("Baseline image not found"));
+
+        InspectionImage candidateImage = inspectionImageRepo.findById(candidateId)
+                .orElseThrow(() -> new IllegalArgumentException("Candidate image not found"));
+
+        if (baselineImage.getFilePath() == null || candidateImage.getFilePath() == null) {
+            throw new IllegalArgumentException("File paths for images cannot be null");
+        }
+
+        MLPredictionRequest request = new MLPredictionRequest();
+        request.setBaselineImagePath(baselineImage.getFilePath());
+        request.setCandidateImagePath(candidateImage.getFilePath());
+        request.setModelType("thermal_analysis");
+
+        MLPredictionResponse response = pythonMLService.analyzeThermalImages(request);
+        return ResponseEntity.ok(response);
     }
     
     @PostMapping("/thermal/analyze-upload")
@@ -285,7 +317,7 @@ public class MainController {
         try {
             // Find candidate image in DB
             InspectionImage candidateImage = inspectionImageRepo.findById(candidateId)
-                    .orElseThrow(() -> new RuntimeException("Candidate image not found"));
+                    .orElseThrow(() -> new IllegalArgumentException("Candidate image not found"));
             
             // Save baseline file temporarily
             String folder = System.getProperty("user.dir") + "/uploads/";
@@ -316,5 +348,32 @@ public class MainController {
             MLPredictionResponse errorResponse = MLPredictionResponse.error("Error processing thermal analysis: " + e.getMessage());
             return ResponseEntity.status(500).body(errorResponse);
         }
+    }
+
+    // Endpoint to add General Record
+    @PostMapping("/general-records")
+    public GeneralRecord addGeneralRecord(@RequestBody GeneralRecord generalRecord) {
+        if (generalRecord == null) {
+            throw new IllegalArgumentException("General record cannot be null");
+        }
+        return generalRecordRepo.save(generalRecord);
+    }
+
+    // Endpoint to add Maintenance Record
+    @PostMapping("/maintenance-records")
+    public MaintenanceRecord addMaintenanceRecord(@RequestBody MaintenanceRecord maintenanceRecord) {
+        if (maintenanceRecord == null) {
+            throw new IllegalArgumentException("Maintenance record cannot be null");
+        }
+        return maintenanceRecordRepo.save(maintenanceRecord);
+    }
+
+    // Endpoint to add Work Data Sheet
+    @PostMapping("/work-data-sheets")
+    public WorkDataSheet addWorkDataSheet(@RequestBody WorkDataSheet workDataSheet) {
+        if (workDataSheet == null) {
+            throw new IllegalArgumentException("Work data sheet cannot be null");
+        }
+        return workDataSheetRepo.save(workDataSheet);
     }
 }

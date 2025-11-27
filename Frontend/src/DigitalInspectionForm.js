@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 // Assuming you have an API function to fetch detailed transformer data
-import { getTransformers } from "./API"; 
+import { getTransformers, addGeneralRecord, addMaintenanceRecord, addWorkDataSheet } from "./API"; 
 import { FaCalendarAlt, FaClock } from 'react-icons/fa';
 
 export default function DigitalInspectionForm({ inspection, onSave, onCancel }) {
@@ -104,11 +104,22 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
   };
   
   // Handlers for Save and Edit buttons
-  const handleSave = () => {
-    // In a real application, you would call an API to save the form data.
-    // For now, it just calls the onSave prop, which handles navigation.
-    console.log("Saving form data:", form);
-    onSave();
+  const handleSave = async () => {
+    try {
+      if (activeTab === "general") {
+        await addGeneralRecord(form);
+        console.log("General record saved successfully");
+      } else if (activeTab === "maintenance") {
+        await addMaintenanceRecord(form);
+        console.log("Maintenance record saved successfully");
+      } else if (activeTab === "workdata") {
+        await addWorkDataSheet(form);
+        console.log("Work data sheet saved successfully");
+      }
+      onSave();
+    } catch (error) {
+      console.error("Error saving form data:", error);
+    }
   };
 
   if (loading) {
