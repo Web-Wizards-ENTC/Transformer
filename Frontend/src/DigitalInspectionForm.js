@@ -211,7 +211,227 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
           </div>
         )}
 
-        {/* --- Maintenance & Workdata tabs remain unchanged --- */}
+        {/* Maintenance Record Tab */}
+        {activeTab === 'maintenance' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <InputField label="Start Time" type="time" value={form.startTime} onChange={(e) => handleChange('startTime', e.target.value)} icon={FaClock} />
+              <InputField label="Completion Time" type="time" value={form.completionTime} onChange={(e) => handleChange('completionTime', e.target.value)} icon={FaClock} />
+            </div>
+
+            <div className="border-t pt-6">
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">Personnel</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <InputField label="Supervised By" value={form.supervisedBy} onChange={(e) => handleChange('supervisedBy', e.target.value)} placeholder="Enter supervisor name" />
+                <InputField label="Tech I" value={form.techI} onChange={(e) => handleChange('techI', e.target.value)} placeholder="Enter Tech I name" />
+                <InputField label="Tech II" value={form.techII} onChange={(e) => handleChange('techII', e.target.value)} placeholder="Enter Tech II name" />
+                <InputField label="Tech III" value={form.techIII} onChange={(e) => handleChange('techIII', e.target.value)} placeholder="Enter Tech III name" />
+                <div className="col-span-2">
+                  <InputField label="Helpers" value={form.helpers} onChange={(e) => handleChange('helpers', e.target.value)} placeholder="Enter helpers' names" />
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t pt-6">
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">Inspection & Rectification</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <InputField label="Inspected By" value={form.inspectedBy} onChange={(e) => handleChange('inspectedBy', e.target.value)} placeholder="Enter inspector name" />
+                <InputField label="Inspected Date" type="date" value={form.inspectedDate} onChange={(e) => handleChange('inspectedDate', e.target.value)} icon={FaCalendarAlt} />
+                <InputField label="Rectified By" value={form.rectifiedBy} onChange={(e) => handleChange('rectifiedBy', e.target.value)} placeholder="Enter rectifier name" />
+                <InputField label="Rectified Date" type="date" value={form.rectifiedDate} onChange={(e) => handleChange('rectifiedDate', e.target.value)} icon={FaCalendarAlt} />
+                <InputField label="Re-Inspected By" value={form.reInspectedBy} onChange={(e) => handleChange('reInspectedBy', e.target.value)} placeholder="Enter re-inspector name" />
+                <InputField label="Re-Inspected Date" type="date" value={form.reInspectedDate} onChange={(e) => handleChange('reInspectedDate', e.target.value)} icon={FaCalendarAlt} />
+              </div>
+            </div>
+
+            <div className="border-t pt-6">
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">CSS Verification</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <InputField label="CSS 1" value={form.css1} onChange={(e) => handleChange('css1', e.target.value)} placeholder="Enter CSS 1 verifier" />
+                <InputField label="CSS 1 Date" type="date" value={form.css1Date} onChange={(e) => handleChange('css1Date', e.target.value)} icon={FaCalendarAlt} />
+                
+                <div className="col-span-2 flex items-center gap-2 p-3 bg-gray-50 rounded border border-gray-300">
+                  <input 
+                    type="checkbox" 
+                    id="allSpotsCorrect"
+                    checked={form.allSpotsCorrect || false}
+                    onChange={(e) => handleChange('allSpotsCorrect', e.target.checked)}
+                    className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                  />
+                  <label htmlFor="allSpotsCorrect" className="text-sm font-medium text-gray-700 cursor-pointer">
+                    All spots were found to be correct
+                  </label>
+                </div>
+
+                <InputField label="CSS 2" value={form.css2} onChange={(e) => handleChange('css2', e.target.value)} placeholder="Enter CSS 2 verifier" />
+                <InputField label="CSS 2 Date" type="date" value={form.css2Date} onChange={(e) => handleChange('css2Date', e.target.value)} icon={FaCalendarAlt} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Work Data Sheet Tab */}
+        {activeTab === 'workdata' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-3 gap-4">
+              <SelectField 
+                label="Gang Leader" 
+                value={form.gangLeader} 
+                onChange={(e) => handleChange('gangLeader', e.target.value)}
+                options={['', 'P-453', 'P-454', 'P-455', 'P-456']}
+              />
+              <InputField label="Date" type="date" value={form.workDate} onChange={(e) => handleChange('workDate', e.target.value)} icon={FaCalendarAlt} />
+              <InputField label="Job Started Time" type="time" value={form.jobStartedTime} onChange={(e) => handleChange('jobStartedTime', e.target.value)} icon={FaClock} />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <InputField label="Serial No." value={form.serialNo} onChange={(e) => handleChange('serialNo', e.target.value)} placeholder="e.g., J-14-V016010026" />
+              <SelectField 
+                label="kVA" 
+                value={form.kva} 
+                onChange={(e) => handleChange('kva', e.target.value)}
+                options={['', '50', '100', '160', '250', '315', '500', '630']}
+              />
+              <SelectField 
+                label="Make" 
+                value={form.make} 
+                onChange={(e) => handleChange('make', e.target.value)}
+                options={['', 'LTL', 'BEST', 'TOSHIBA', 'ABB']}
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <SelectField 
+                label="Tap Position" 
+                value={form.tapPosition} 
+                onChange={(e) => handleChange('tapPosition', e.target.value)}
+                options={['', '1', '2', '3', '4', '5']}
+              />
+              <InputField label="Tx CT Ration" value={form.txCtRation} onChange={(e) => handleChange('txCtRation', e.target.value)} placeholder="e.g., 300/5A" />
+              <InputField label="Manufacture Year" value={form.manufactureYear} onChange={(e) => handleChange('manufactureYear', e.target.value)} placeholder="e.g., 2014" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">Earth Resistance</label>
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    value={form.earthResistance || ''} 
+                    onChange={(e) => handleChange('earthResistance', e.target.value)}
+                    className="flex-1 border border-gray-300 rounded p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                  <span className="text-gray-600 font-medium">Ω</span>
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">Neutral</label>
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="number" 
+                    step="0.01"
+                    value={form.neutral || ''} 
+                    onChange={(e) => handleChange('neutral', e.target.value)}
+                    className="flex-1 border border-gray-300 rounded p-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="-"
+                  />
+                  <span className="text-gray-600 font-medium">Ω</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="surgeOrBody"
+                  value="Surge"
+                  checked={form.surgeOrBody === 'Surge'}
+                  onChange={(e) => handleChange('surgeOrBody', e.target.value)}
+                  className="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-sm font-medium text-gray-700">Surge</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="surgeOrBody"
+                  value="Body"
+                  checked={form.surgeOrBody === 'Body'}
+                  onChange={(e) => handleChange('surgeOrBody', e.target.value)}
+                  className="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-sm font-medium text-gray-700">Body</span>
+              </label>
+            </div>
+
+            <div className="border-t pt-6">
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">FDS Fuse Ratings</h2>
+              <div className="grid grid-cols-5 gap-4">
+                {[1, 2, 3, 4, 5].map((num) => (
+                  <div key={num} className="flex flex-col gap-2">
+                    <label className="text-sm font-medium text-gray-700">F{num}</label>
+                    <input 
+                      type="checkbox"
+                      checked={form[`fdsF${num}`] || false}
+                      onChange={(e) => handleChange(`fdsF${num}`, e.target.checked)}
+                      className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500"
+                    />
+                    <input 
+                      type="number"
+                      step="0.1"
+                      value={form[`fdsF${num}A`] || ''}
+                      onChange={(e) => handleChange(`fdsF${num}A`, e.target.value)}
+                      placeholder="A"
+                      className="w-full border border-gray-300 rounded p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <InputField label="Job Completed Time" type="time" value={form.jobCompletedTime} onChange={(e) => handleChange('jobCompletedTime', e.target.value)} icon={FaClock} />
+
+            <div className="border-t pt-6">
+              <TextAreaField 
+                label="Notes" 
+                value={form.workNotes} 
+                onChange={(e) => handleChange('workNotes', e.target.value)}
+                placeholder="Detected minor overheating on the transformer's secondary winding during peak load hours..."
+              />
+            </div>
+
+            <div className="border-t pt-6">
+              <h2 className="text-xl font-semibold text-gray-700 mb-4">Materials/Items Used</h2>
+              <div className="space-y-2">
+                {[
+                  { name: '16mm2 Copper wire', code: 'B112' },
+                  { name: '70mm2 ABC wire', code: 'B244' },
+                  { name: 'Aluminum binding 14mm2', code: 'B712' },
+                  { name: '50mm2 Earth Wire', code: 'B815' },
+                  { name: '60mm2 AAC', code: 'C113' },
+                  { name: 'Copper Lug 16mm2', code: 'G332' },
+                  { name: 'Copper Lug 50mm2', code: 'G354' },
+                  { name: 'C/T Lug 2.5mm2', code: 'G360' },
+                  { name: 'Bimetallic Lug 35mm2', code: 'G373A' },
+                  { name: 'Bimetallic Lug 50mm2', code: 'G374' }
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded border border-gray-200">
+                    <span className="text-sm text-gray-700 flex-1">{item.name}</span>
+                    <span className="text-sm text-gray-600 w-20 text-center">{item.code}</span>
+                    <input 
+                      type="checkbox"
+                      checked={form[`material_${item.code}`] || false}
+                      onChange={(e) => handleChange(`material_${item.code}`, e.target.checked)}
+                      className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 ml-4"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="flex justify-between gap-4 mt-8 pt-4 border-t">
           <button className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700" onClick={onCancel}>Back</button>
