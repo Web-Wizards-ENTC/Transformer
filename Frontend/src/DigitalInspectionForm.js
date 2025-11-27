@@ -39,6 +39,43 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
     allSpotsCorrect: false,
     css2: '',
     css2Date: '',
+    // Work - Data Sheet fields
+    gangLeader: '',
+    workDate: '',
+    jobStartedTime: '',
+    serialNo: '',
+    kva: '',
+    make: '',
+    tapPosition: '',
+    txCtRation: '',
+    manufactureYear: '',
+    earthResistance: '',
+    neutral: '',
+    surgeOrBody: '', // 'surge' or 'body'
+    fdsF1: false,
+    fdsF1A: '',
+    fdsF2: false,
+    fdsF2A: '',
+    fdsF3: false,
+    fdsF3A: '',
+    fdsF4: false,
+    fdsF4A: '',
+    fdsF5: false,
+    fdsF5A: '',
+    jobCompletedTime: '',
+    workNotes: '',
+    materials: {
+      copperWire16mm2: false,
+      abcWire70mm2: false,
+      aluminumBinding14mm2: false,
+      earthWire50mm2: false,
+      aac60mm2: false,
+      copperLug16mm2: false,
+      copperLug50mm2: false,
+      ctLug25mm2: false,
+      bimetallicLug35mm2: false,
+      bimetallicLug50mm2: false,
+    },
   });
 
   // Fetch Transformer Details (for non-editable fields)
@@ -381,9 +418,251 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
         )}
 
         {activeTab === 'workdata' && (
-          <div className="p-6 bg-gray-50 rounded-lg">
-            <h2 className="text-xl font-semibold text-gray-700 mb-4">Work - Data Sheet</h2>
-            <p className="text-gray-600">Work data sheet content will be displayed here.</p>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-700 mb-6">Work - Data Sheet</h2>
+            
+            {/* Gang Leader, Date, Job Started Time */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <SelectField
+                label="Gang Leader"
+                value={form.gangLeader}
+                onChange={(e) => handleChange("gangLeader", e.target.value)}
+                options={['', 'P-453', 'A-110', 'T-112', 'Other']}
+              />
+              <InputField
+                label="Date"
+                type="date"
+                value={form.workDate}
+                onChange={(e) => handleChange("workDate", e.target.value)}
+                placeholder="mm/dd/yyyy"
+                icon={FaCalendarAlt}
+              />
+              <InputField
+                label="Job Started Time"
+                type="time"
+                value={form.jobStartedTime}
+                onChange={(e) => handleChange("jobStartedTime", e.target.value)}
+                placeholder="--:-- --"
+                icon={FaClock}
+              />
+            </div>
+
+            {/* Serial No., kVA, Make */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <InputField
+                label="Serial No."
+                value={form.serialNo}
+                onChange={(e) => handleChange("serialNo", e.target.value)}
+                placeholder="e.g., J-14-V016010026"
+              />
+              <SelectField
+                label="kVA"
+                value={form.kva}
+                onChange={(e) => handleChange("kva", e.target.value)}
+                options={['', '50', '100', '160', '200', '250', '315', '400', '500']}
+              />
+              <SelectField
+                label="Make"
+                value={form.make}
+                onChange={(e) => handleChange("make", e.target.value)}
+                options={['', 'LTL', 'CGL', 'Siemens', 'ABB', 'Other']}
+              />
+            </div>
+
+            {/* Tap Position, Tx CT Ration, Manufacture Year */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <SelectField
+                label="Tap Position"
+                value={form.tapPosition}
+                onChange={(e) => handleChange("tapPosition", e.target.value)}
+                options={['', '1', '2', '3', '4', '5']}
+              />
+              <InputField
+                label="Tx CT Ration"
+                value={form.txCtRation}
+                onChange={(e) => handleChange("txCtRation", e.target.value)}
+                placeholder="e.g., 300/5A"
+              />
+              <InputField
+                label="Manufacture Year"
+                value={form.manufactureYear}
+                onChange={(e) => handleChange("manufactureYear", e.target.value)}
+                placeholder="e.g., 2014"
+              />
+            </div>
+
+            {/* Earth Resistance & Neutral */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">Earth Resistance</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={form.earthResistance}
+                    onChange={(e) => handleChange("earthResistance", e.target.value)}
+                    className="w-full border border-gray-300 rounded p-2 pr-10 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">Ω</span>
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">Neutral</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={form.neutral}
+                    onChange={(e) => handleChange("neutral", e.target.value)}
+                    placeholder="-"
+                    className="w-full border border-gray-300 rounded p-2 pr-10 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                  <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">Ω</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Radio buttons: Surge / Body */}
+            <div className="flex items-center space-x-6 mb-6">
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="surgeOrBody"
+                  value="surge"
+                  checked={form.surgeOrBody === 'surge'}
+                  onChange={(e) => handleChange("surgeOrBody", e.target.value)}
+                  className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                />
+                <span className="text-sm font-medium text-gray-700">Surge</span>
+              </label>
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="surgeOrBody"
+                  value="body"
+                  checked={form.surgeOrBody === 'body'}
+                  onChange={(e) => handleChange("surgeOrBody", e.target.value)}
+                  className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                />
+                <span className="text-sm font-medium text-gray-700">Body</span>
+              </label>
+            </div>
+
+            {/* FDS Fuse Ratings */}
+            <div className="p-6 bg-gray-50 rounded-lg border border-gray-200 mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">FDS Fuse Ratings</h3>
+              <div className="grid grid-cols-5 gap-4">
+                {[1, 2, 3, 4, 5].map(num => (
+                  <div key={num} className="flex items-center space-x-2">
+                    <label className="flex items-center space-x-2">
+                      <span className="text-sm font-medium text-gray-700">F{num}</span>
+                      <input
+                        type="checkbox"
+                        checked={form[`fdsF${num}`]}
+                        onChange={(e) => handleChange(`fdsF${num}`, e.target.checked)}
+                        className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      />
+                    </label>
+                    <input
+                      type="text"
+                      value={form[`fdsF${num}A`]}
+                      onChange={(e) => handleChange(`fdsF${num}A`, e.target.value)}
+                      placeholder="A"
+                      className="w-20 border border-gray-300 rounded p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Job Completed Time */}
+            <div className="mb-6">
+              <InputField
+                label="Job Completed Time"
+                type="time"
+                value={form.jobCompletedTime}
+                onChange={(e) => handleChange("jobCompletedTime", e.target.value)}
+                placeholder="--:-- --"
+                icon={FaClock}
+              />
+            </div>
+
+            {/* Notes */}
+            <div className="mb-6">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">Notes</label>
+              <textarea
+                value={form.workNotes}
+                onChange={(e) => handleChange("workNotes", e.target.value)}
+                placeholder="Detected minor overheating on the transformer's secondary winding during peak load hours. Hotspot temperature measured at 112.2°F, slightly above tolerance threshold for current load profile. Recommend tightening connections on the affected phase, cleaning cooling fins, and rechecking temperature during next inspection cycle. No immediate outage required."
+                rows="5"
+                className="w-full border border-gray-300 rounded p-3 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+              />
+            </div>
+
+            {/* Materials/Items Used */}
+            <div className="p-6 bg-gray-50 rounded-lg border border-gray-200 mb-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Materials/Items Used</h3>
+              <div className="space-y-3">
+                <MaterialItem 
+                  label="16mm2 Copper wire" 
+                  code="B112"
+                  checked={form.materials.copperWire16mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, copperWire16mm2: checked })}
+                />
+                <MaterialItem 
+                  label="70mm2 ABC wire" 
+                  code="B244"
+                  checked={form.materials.abcWire70mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, abcWire70mm2: checked })}
+                />
+                <MaterialItem 
+                  label="Aluminum binding 14mm2" 
+                  code="B712"
+                  checked={form.materials.aluminumBinding14mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, aluminumBinding14mm2: checked })}
+                />
+                <MaterialItem 
+                  label="50mm2 Earth Wire" 
+                  code="B815"
+                  checked={form.materials.earthWire50mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, earthWire50mm2: checked })}
+                />
+                <MaterialItem 
+                  label="60mm2 AAC" 
+                  code="C113"
+                  checked={form.materials.aac60mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, aac60mm2: checked })}
+                />
+                <MaterialItem 
+                  label="Copper Lug 16mm2" 
+                  code="G332"
+                  checked={form.materials.copperLug16mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, copperLug16mm2: checked })}
+                />
+                <MaterialItem 
+                  label="Copper Lug 50mm2" 
+                  code="G354"
+                  checked={form.materials.copperLug50mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, copperLug50mm2: checked })}
+                />
+                <MaterialItem 
+                  label="C/T Lug 2.5mm2" 
+                  code="G360"
+                  checked={form.materials.ctLug25mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, ctLug25mm2: checked })}
+                />
+                <MaterialItem 
+                  label="Bimetallic Lug 35mm2" 
+                  code="G373A"
+                  checked={form.materials.bimetallicLug35mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, bimetallicLug35mm2: checked })}
+                />
+                <MaterialItem 
+                  label="Bimetallic Lug 50mm2" 
+                  code="G374"
+                  checked={form.materials.bimetallicLug50mm2}
+                  onChange={(checked) => handleChange("materials", { ...form.materials, bimetallicLug50mm2: checked })}
+                />
+              </div>
+            </div>
           </div>
         )}
 
@@ -501,4 +780,17 @@ const ReadingsSection = ({ title, form, handleChange, prefix }) => (
             </div>
         </div>
     </div>
+);
+
+const MaterialItem = ({ label, code, checked, onChange }) => (
+  <div className="flex items-center justify-between p-3 bg-white rounded border border-gray-200">
+    <span className="text-sm text-gray-700 flex-1">{label}</span>
+    <span className="text-sm text-gray-500 w-20 text-center">{code}</span>
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={(e) => onChange(e.target.checked)}
+      className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+    />
+  </div>
 );
