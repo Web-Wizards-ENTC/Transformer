@@ -57,17 +57,17 @@ public class PdfGenerationService {
             // ========== SECTION 1: GENERAL RECORD ==========
             addGeneralRecordSection(document, generalRecord);
             
-            // Page break before work data sheet
-            document.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
-
-            // ========== SECTION 2: WORK DATA SHEET ==========
-            addWorkDataSheetSection(document, workData);
-            
             // Page break before maintenance section
             document.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
-            
-            // ========== SECTION 3: MAINTENANCE RECORD ==========
+
+            // ========== SECTION 2: MAINTENANCE RECORD ==========
             addMaintenanceRecordSection(document, maintenance);
+            
+            // Page break before work data sheet
+            document.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
+            
+            // ========== SECTION 3: WORK DATA SHEET ==========
+            addWorkDataSheetSection(document, workData);
 
             // Footer
             Paragraph footer = new Paragraph("Generated on: " + LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
