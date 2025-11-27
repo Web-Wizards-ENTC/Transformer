@@ -19,13 +19,14 @@ import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.AreaBreakType;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
+import com.webwizards.transformerApp.model.GeneralRecord;
 import com.webwizards.transformerApp.model.MaintenanceRecord;
 import com.webwizards.transformerApp.model.WorkDataSheet;
 
 @Service
 public class PdfGenerationService {
 
-    public byte[] generateCompleteInspectionPdf(WorkDataSheet workData, MaintenanceRecord maintenance) {
+    public byte[] generateCompleteInspectionPdf(GeneralRecord generalRecord, MaintenanceRecord maintenance, WorkDataSheet workData) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
@@ -41,13 +42,19 @@ public class PdfGenerationService {
                     .setMarginBottom(30);
             document.add(mainHeader);
 
-            // ========== SECTION 1: WORK DATA SHEET ==========
+            // ========== SECTION 1: GENERAL RECORD ==========
+            addGeneralRecordSection(document, generalRecord);
+            
+            // Page break before work data sheet
+            document.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
+
+            // ========== SECTION 2: WORK DATA SHEET ==========
             addWorkDataSheetSection(document, workData);
             
             // Page break before maintenance section
             document.add(new AreaBreak(AreaBreakType.NEXT_PAGE));
             
-            // ========== SECTION 2: MAINTENANCE RECORD ==========
+            // ========== SECTION 3: MAINTENANCE RECORD ==========
             addMaintenanceRecordSection(document, maintenance);
 
             // Footer
@@ -202,6 +209,134 @@ public class PdfGenerationService {
                     .setBackgroundColor(new DeviceRgb(245, 245, 245))
                     .setPadding(10);
             document.add(notes);
+        }
+    }
+
+    private void addGeneralRecordSection(Document document, GeneralRecord generalRecord) {
+        // Section Header
+        Paragraph sectionHeader = new Paragraph("GENERAL INSPECTION RECORD")
+                .setFontSize(16)
+                .setBold()
+                .setBackgroundColor(new DeviceRgb(46, 204, 113))
+                .setFontColor(ColorConstants.WHITE)
+                .setPadding(10)
+                .setTextAlignment(TextAlignment.CENTER)
+                .setMarginBottom(15);
+        document.add(sectionHeader);
+
+        // Date and Time Section
+        Table dateTimeTable = new Table(UnitValue.createPercentArray(new float[]{1, 1}));
+        dateTimeTable.setWidth(UnitValue.createPercentValue(100));
+        
+        addTableCell(dateTimeTable, "Date:", true);
+        addTableCell(dateTimeTable, formatDate(generalRecord.getDate()), false);
+        
+        addTableCell(dateTimeTable, "Time:", true);
+        addTableCell(dateTimeTable, formatTime(generalRecord.getTime()), false);
+        
+        addTableCell(dateTimeTable, "Inspector Name:", true);
+        addTableCell(dateTimeTable, generalRecord.getInspectorName(), false);
+        
+        document.add(dateTimeTable);
+        document.add(new Paragraph("\n"));
+
+        // Status Information
+        Paragraph statusHeader = new Paragraph("Status & Assessment")
+                .setFontSize(14)
+                .setBold()
+                .setMarginTop(10)
+                .setMarginBottom(10);
+        document.add(statusHeader);
+
+        Table statusTable = new Table(UnitValue.createPercentArray(new float[]{1, 1}));
+        statusTable.setWidth(UnitValue.createPercentValue(100));
+        
+        addTableCell(statusTable, "Transformer Status:", true);
+        addTableCell(statusTable, generalRecord.getTransformerStatus(), false);
+        
+        addTableCell(statusTable, "Recommended Action:", true);
+        addTableCell(statusTable, generalRecord.getRecommendedAction(), false);
+        
+        document.add(statusTable);
+        document.add(new Paragraph("\n"));
+
+        // Primary Voltage & Current Readings
+        Paragraph primaryHeader = new Paragraph("Primary Side Readings")
+                .setFontSize(14)
+                .setBold()
+                .setMarginTop(10)
+                .setMarginBottom(10);
+        document.add(primaryHeader);
+
+        Table primaryTable = new Table(UnitValue.createPercentArray(new float[]{1, 1, 1, 1}));
+        primaryTable.setWidth(UnitValue.createPercentValue(100));
+        
+        // Header row
+        addTableCell(primaryTable, "Phase", true);
+        addTableCell(primaryTable, "R Phase", true);
+        addTableCell(primaryTable, "Y Phase", true);
+        addTableCell(primaryTable, "B Phase", true);
+        
+        // Voltage row
+        addTableCell(primaryTable, "Voltage (V)", true);
+        addTableCell(primaryTable, formatFloat(generalRecord.getVoltageR()), false);
+        addTableCell(primaryTable, formatFloat(generalRecord.getVoltageY()), false);
+        addTableCell(primaryTable, formatFloat(generalRecord.getVoltageB()), false);
+        
+        // Current row
+        addTableCell(primaryTable, "Current (A)", true);
+        addTableCell(primaryTable, formatFloat(generalRecord.getCurrentR()), false);
+        addTableCell(primaryTable, formatFloat(generalRecord.getCurrentY()), false);
+        addTableCell(primaryTable, formatFloat(generalRecord.getCurrentB()), false);
+        
+        document.add(primaryTable);
+        document.add(new Paragraph("\n"));
+
+        // Secondary Voltage & Current Readings
+        Paragraph secondaryHeader = new Paragraph("Secondary Side Readings")
+                .setFontSize(14)
+                .setBold()
+                .setMarginTop(10)
+                .setMarginBottom(10);
+        document.add(secondaryHeader);
+
+        Table secondaryTable = new Table(UnitValue.createPercentArray(new float[]{1, 1, 1, 1}));
+        secondaryTable.setWidth(UnitValue.createPercentValue(100));
+        
+        // Header row
+        addTableCell(secondaryTable, "Phase", true);
+        addTableCell(secondaryTable, "R Phase", true);
+        addTableCell(secondaryTable, "Y Phase", true);
+        addTableCell(secondaryTable, "B Phase", true);
+        
+        // Voltage row
+        addTableCell(secondaryTable, "Voltage (V)", true);
+        addTableCell(secondaryTable, formatFloat(generalRecord.getVoltageR2()), false);
+        addTableCell(secondaryTable, formatFloat(generalRecord.getVoltageY2()), false);
+        addTableCell(secondaryTable, formatFloat(generalRecord.getVoltageB2()), false);
+        
+        // Current row
+        addTableCell(secondaryTable, "Current (A)", true);
+        addTableCell(secondaryTable, formatFloat(generalRecord.getCurrentR2()), false);
+        addTableCell(secondaryTable, formatFloat(generalRecord.getCurrentY2()), false);
+        addTableCell(secondaryTable, formatFloat(generalRecord.getCurrentB2()), false);
+        
+        document.add(secondaryTable);
+        document.add(new Paragraph("\n"));
+
+        // Additional Remarks
+        if (generalRecord.getAdditionalRemarks() != null && !generalRecord.getAdditionalRemarks().isEmpty()) {
+            Paragraph remarksHeader = new Paragraph("Additional Remarks")
+                    .setFontSize(14)
+                    .setBold()
+                    .setMarginTop(10)
+                    .setMarginBottom(10);
+            document.add(remarksHeader);
+
+            Paragraph remarks = new Paragraph(generalRecord.getAdditionalRemarks())
+                    .setBackgroundColor(new DeviceRgb(245, 245, 245))
+                    .setPadding(10);
+            document.add(remarks);
         }
     }
 
@@ -493,6 +628,27 @@ public class PdfGenerationService {
     }
 
     public byte[] generateMockInspectionPdf() {
+        // Create mock GeneralRecord
+        GeneralRecord mockGeneral = new GeneralRecord();
+        mockGeneral.setDate(LocalDate.now());
+        mockGeneral.setTime(LocalTime.of(10, 30));
+        mockGeneral.setInspectorName("Emily Roberts");
+        mockGeneral.setTransformerStatus("Operational - Good Condition");
+        mockGeneral.setRecommendedAction("Continue normal operation, schedule next inspection in 6 months");
+        mockGeneral.setVoltageR(230.5f);
+        mockGeneral.setVoltageY(231.2f);
+        mockGeneral.setVoltageB(229.8f);
+        mockGeneral.setCurrentR(145.3f);
+        mockGeneral.setCurrentY(148.7f);
+        mockGeneral.setCurrentB(143.9f);
+        mockGeneral.setVoltageR2(400.1f);
+        mockGeneral.setVoltageY2(401.3f);
+        mockGeneral.setVoltageB2(399.7f);
+        mockGeneral.setCurrentR2(85.2f);
+        mockGeneral.setCurrentY2(86.8f);
+        mockGeneral.setCurrentB2(84.5f);
+        mockGeneral.setAdditionalRemarks("Visual inspection shows no physical damage. Oil level is adequate. All cooling fins are clean. Temperature readings within normal range. No unusual sounds detected during operation.");
+
         // Create mock WorkDataSheet
         WorkDataSheet mockData = new WorkDataSheet();
         mockData.setGangLeader("John Smith");
@@ -541,7 +697,7 @@ public class PdfGenerationService {
         mockMaintenance.setCss2("CSS Officer 2");
         mockMaintenance.setCss2Date(LocalDate.now());
 
-        return generateCompleteInspectionPdf(mockData, mockMaintenance);
+        return generateCompleteInspectionPdf(mockGeneral, mockMaintenance, mockData);
     }
 
     private void addTableCell(Table table, String content, boolean isHeader) {

@@ -53,8 +53,9 @@ public class PdfController {
     public ResponseEntity<byte[]> generateCompletePdf(@RequestBody CompleteInspectionRequest request) {
         try {
             byte[] pdfBytes = pdfGenerationService.generateCompleteInspectionPdf(
-                    request.getWorkDataSheet(), 
-                    request.getMaintenanceRecord()
+                    request.getGeneralRecord(),
+                    request.getMaintenanceRecord(),
+                    request.getWorkDataSheet()
             );
 
             HttpHeaders headers = new HttpHeaders();
