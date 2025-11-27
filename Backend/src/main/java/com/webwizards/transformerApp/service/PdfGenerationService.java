@@ -650,7 +650,7 @@ public class PdfGenerationService {
         GeneralRecord mockGeneral = new GeneralRecord();
         mockGeneral.setDate(LocalDate.now());
         mockGeneral.setTime(LocalTime.of(10, 30));
-        mockGeneral.setInspectorName("Emily Roberts");
+        mockGeneral.setInspectorName("Lasitha");
         mockGeneral.setTransformerStatus("Operational - Good Condition");
         mockGeneral.setRecommendedAction("Continue normal operation, schedule next inspection in 6 months");
         mockGeneral.setVoltageR(230.5f);
@@ -669,7 +669,7 @@ public class PdfGenerationService {
 
         // Create mock WorkDataSheet
         WorkDataSheet mockData = new WorkDataSheet();
-        mockData.setGangLeader("John Smith");
+        mockData.setGangLeader("Ruchira");
         mockData.setWorkDate(LocalDate.now());
         mockData.setJobStartedTime(LocalTime.of(9, 0));
         mockData.setJobCompletedTime(LocalTime.of(15, 30));
@@ -698,16 +698,16 @@ public class PdfGenerationService {
         MaintenanceRecord mockMaintenance = new MaintenanceRecord();
         mockMaintenance.setStartTime(LocalTime.of(9, 0));
         mockMaintenance.setCompletionTime(LocalTime.of(15, 30));
-        mockMaintenance.setSupervisedBy("Michael Johnson");
-        mockMaintenance.setTechI("David Brown");
-        mockMaintenance.setTechII("Robert Wilson");
-        mockMaintenance.setTechIII("James Anderson");
-        mockMaintenance.setHelpers("Thomas Lee, Christopher Martin");
-        mockMaintenance.setInspectedBy("Sarah Davis");
+        mockMaintenance.setSupervisedBy("Sahan");
+        mockMaintenance.setTechI("Yasiru");
+        mockMaintenance.setTechII("Navindu");
+        mockMaintenance.setTechIII("Induwara");
+        mockMaintenance.setHelpers("Kavindu, Nuwan");
+        mockMaintenance.setInspectedBy("Kamal");
         mockMaintenance.setInspectedDate(LocalDate.now().minusDays(1));
-        mockMaintenance.setRectifiedBy("John Smith");
+        mockMaintenance.setRectifiedBy("Saman");
         mockMaintenance.setRectifiedDate(LocalDate.now());
-        mockMaintenance.setReInspectedBy("Sarah Davis");
+        mockMaintenance.setReInspectedBy("Hasitha");
         mockMaintenance.setReInspectedDate(LocalDate.now());
         mockMaintenance.setCss1("CSS Officer 1");
         mockMaintenance.setCss1Date(LocalDate.now());

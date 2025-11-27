@@ -35,7 +35,7 @@ public class PdfController {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
-            headers.setContentDispositionFormData("attachment", "transformer_complete_inspection_mock.pdf");
+            headers.setContentDispositionFormData("attachment", "transformer_inspection_report.pdf");
             headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
 
             return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
