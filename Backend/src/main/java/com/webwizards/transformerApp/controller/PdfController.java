@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.webwizards.transformerApp.dto.CompleteInspectionRequest;
 import com.webwizards.transformerApp.model.WorkDataSheet;
 import com.webwizards.transformerApp.service.PdfGenerationService;
 
@@ -34,7 +35,32 @@ public class PdfController {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
-            headers.setContentDispositionFormData("attachment", "transformer_inspection_mock.pdf");
+            headers.setContentDispositionFormData("attachment", "transformer_complete_inspection_mock.pdf");
+            headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null);
+        }
+    }
+
+    /**
+     * Generate complete PDF with WorkDataSheet and MaintenanceRecord
+     */
+    @PostMapping("/generate/complete")
+    public ResponseEntity<byte[]> generateCompletePdf(@RequestBody CompleteInspectionRequest request) {
+        try {
+            byte[] pdfBytes = pdfGenerationService.generateCompleteInspectionPdf(
+                    request.getWorkDataSheet(), 
+                    request.getMaintenanceRecord()
+            );
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            String filename = "transformer_complete_" + request.getWorkDataSheet().getSerialNo() + ".pdf";
+            headers.setContentDispositionFormData("attachment", filename);
             headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
 
             return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
