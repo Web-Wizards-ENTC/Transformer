@@ -221,8 +221,15 @@ This project consists of two separate components: a backend server (**Spring Boo
 
 ### Phase 3
 
-* Modify or add anomaly annotations.
-* Review and export annotation logs for model feedback.
+* View and analyze anomaly annotations.
+![](Images/20.png)
+* Remove unwanted anomaly annotations.
+![](Images/21.png)
+* Modify and fine-tune anomaly annotations.
+![](Images/22.png)
+* Create new anomaly annotations.
+![](Images/19.png)
+* Review and export annotation logs to enhance model feedback.
 
 ### Phase 4
 
