@@ -269,9 +269,8 @@ This project consists of two separate components: a backend server (**Spring Boo
 
 * **Phase 4:** 
   - Role-based access control not fully enforced for form editing.
-  - Export and report formatting still under development.
-  - Record history filtering may slow down with very large datasets.
-
+  - Enhance the export functionality to support multiple formats (e.g., PDF, Excel, JSON).
+  - Introduce real-time collaboration features to prevent conflicts during concurrent edits.
 ---
 
 ## API Endpoints Used
