@@ -226,9 +226,23 @@ This project consists of two separate components: a backend server (**Spring Boo
 
 ### Phase 4
 
-* Generate maintenance records automatically from analyzed data.
-* Engineers can fill in inspection details and save records.
-* Access historical maintenance forms per transformer
+* Phase 4 allows the engineer to create a final, formal digital record of the inspection and view past records.
+* Generate Digital Form: After completing the image upload and analysis steps (Phase 1-3), navigate to the inspection overview. Click the "Digital Form" button to generate the maintenance record.
+![](Images/1.png)
+* Fill and Save Maintenance Records: The generated form includes system-generated data and editable fields for the engineer.
+* The record is divided into sections, such as General Record, Maintenance Record, and Work - Data Sheet.
+* Fill in required fields like Inspector Name, Transformer Status (OK/Needs Maintenance/Urgent Attention), Electrical Readings, and Recommended Action.
+* General Record Form:
+![](Images/2.png)
+![](Images/3.png)
+* Maintenance Record Form:
+![](Images/4.png)
+![](Images/5.png)
+* Work Data Sheet:
+![](Images/6.png)
+![](Images/7.png)
+* View and Export Past Records: Use the Past Forms interface to view a history of all completed maintenance records for the transformer. You can download a completed form using the Download button.
+![](Images/8.png)
 
 ---
 
@@ -277,6 +291,9 @@ The frontend calls several backend endpoints. Below is a concise table of the ke
 | /api/anomalies/delete | PATCH | Soft delete anomaly by inspection number and index. |
 | /api/anomalies/{inspectionNumber} | GET | Get all anomalies for a given inspection number. |
 | /api/analysis-results | POST | Save analysis result boxes for an inspection. |
+| /api/records | POST | Save a completed maintenance record form. |
+| /api/records/{transformerId} | GET | Retrieve all historical records for a specific transformer. |
+| /api/records/export/{recordId} | GET | Export a specific maintenance record (e.g., as PDF or JSON). |
 
 
 Notes:
