@@ -300,6 +300,11 @@ The frontend calls several backend endpoints. Below is a concise table of the ke
 | /api/records | POST | Save a completed maintenance record form. |
 | /api/records/{transformerId} | GET | Retrieve all historical records for a specific transformer. |
 | /api/records/export/{recordId} | GET | Export a specific maintenance record (e.g., as PDF or JSON). |
+| /api/annotations/export | GET | Export annotation logs for model feedback in CSV or JSON format. |
+| /api/general-records | POST | Add a new general record. |
+| /api/maintenance-records | POST | Add a new maintenance record. |
+| /api/work-data-sheets | POST | Add a new work data sheet. |
+
 
 
 Notes:
