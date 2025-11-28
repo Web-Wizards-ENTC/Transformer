@@ -4,7 +4,7 @@ import { FaBars, FaBell } from 'react-icons/fa';
 export default function UpperBar({ userName }) {
   const [showNotification, setShowNotification] = useState(false);
 
-  const nameParts = userName ? userName.split(' ') : ['User', 'Name'];
+  const nameParts = userName ? userName.split(' ') : ['Lasitha', 'Amarasinghe'];
   const firstName = nameParts[0];
   const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
 
