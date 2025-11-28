@@ -665,7 +665,7 @@ public class PdfGenerationService {
         mockGeneral.setCurrentR2(85.2f);
         mockGeneral.setCurrentY2(86.8f);
         mockGeneral.setCurrentB2(84.5f);
-        mockGeneral.setAdditionalRemarks("Visual inspection shows no physical damage. Oil level is adequate. All cooling fins are clean. Temperature readings within normal range. No unusual sounds detected during operation.");
+        mockGeneral.setAdditionalRemarks("Visual inspection shows no physical damage.");
 
         // Create mock WorkDataSheet
         WorkDataSheet mockData = new WorkDataSheet();
@@ -692,7 +692,7 @@ public class PdfGenerationService {
         mockData.setFdsF4A(96.1f);
         mockData.setFdsF5(true);
         mockData.setFdsF5A(97.3f);
-        mockData.setWorkNotes("All tests completed successfully. Transformer is in good working condition. Minor oil leak detected and fixed during inspection. Recommended for next inspection after 6 months.");
+        mockData.setWorkNotes("All tests completed successfully. No issues found.");
 
         // Create mock MaintenanceRecord
         MaintenanceRecord mockMaintenance = new MaintenanceRecord();

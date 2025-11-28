@@ -10,6 +10,7 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
   const [transformer, setTransformer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('general');
+  const [showSavePopup, setShowSavePopup] = useState(false);
   const [form, setForm] = useState({
     date: inspection.inspected || new Date().toISOString().split('T')[0],
     time: inspection.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
@@ -73,9 +74,17 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
       if (activeTab === "general") await addGeneralRecord(form);
       else if (activeTab === "maintenance") await addMaintenanceRecord(form);
       else if (activeTab === "workdata") await addWorkDataSheet(form);
-      onSave();
+      
+      // Show success popup
+      setShowSavePopup(true);
+      
+      // Hide popup after 3 seconds
+      setTimeout(() => {
+        setShowSavePopup(false);
+      }, 3000);
     } catch (error) {
       console.error("Error saving form data:", error);
+      alert("Failed to save details. Please try again.");
     }
   };
 
@@ -441,6 +450,23 @@ export default function DigitalInspectionForm({ inspection, onSave, onCancel }) 
             <button className="px-6 py-2 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700" onClick={handleSave}>Save</button>
           </div>
         </div>
+
+        {/* Success Popup */}
+        {showSavePopup && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full mx-4 transform transition-all">
+              <div className="text-center">
+                <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                  <svg className="h-10 w-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Success!</h3>
+                <p className="text-gray-600 text-lg">Saved details</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
