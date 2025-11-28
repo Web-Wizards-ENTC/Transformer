@@ -228,21 +228,21 @@ This project consists of two separate components: a backend server (**Spring Boo
 
 * Phase 4 allows the engineer to create a final, formal digital record of the inspection and view past records.
 * Generate Digital Form: After completing the image upload and analysis steps (Phase 1-3), navigate to the inspection overview. Click the "Digital Form" button to generate the maintenance record.
-![](Images/1.png)
+![](Images/11.png)
 * Fill and Save Maintenance Records: The generated form includes system-generated data and editable fields for the engineer.
 * The record is divided into sections, such as General Record, Maintenance Record, and Work - Data Sheet.
 * Fill in required fields like Inspector Name, Transformer Status (OK/Needs Maintenance/Urgent Attention), Electrical Readings, and Recommended Action.
 * General Record Form:
-![](Images/2.png)
-![](Images/3.png)
+![](Images/12.png)
+![](Images/13.png)
 * Maintenance Record Form:
-![](Images/4.png)
-![](Images/5.png)
+![](Images/14.png)
+![](Images/15.png)
 * Work Data Sheet:
-![](Images/6.png)
-![](Images/7.png)
+![](Images/16.png)
+![](Images/17.png)
 * View and Export Past Records: Use the Past Forms interface to view a history of all completed maintenance records for the transformer. You can download a completed form using the Download button.
-![](Images/8.png)
+![](Images/18.png)
 
 ---
 
